@@ -1,15 +1,16 @@
 # Iris Product Requirements Document (PRD)
 
 ## 1. Executive Summary
-Iris is an intelligent, multi-adapter AI CLI orchestrator designed to route tasks to the most suitable AI model (Claude, Antigravity, Copilot, or Codex) based on phase and complexity. By maintaining shared memory through Engram and intelligently delegating workloads, Iris eliminates manual context management and ensures the right AI is used for the right job, saving tokens and improving developer velocity.
+Iris is an intelligent, multi-adapter AI CLI orchestrator designed to route tasks to the most suitable AI model (Claude, Antigravity, Copilot, or Codex) based on phase and complexity. By maintaining shared memory through Engram and intelligently delegating workloads, Iris eliminates manual context management and ensures the right AI is used for the job, saving tokens and improving developer velocity.
 
 ## 2. Problem Statement
-Iris solves the following 5 pain points:
+Iris solves the following 6 pain points:
 1. **Manual context pasting:** Developers waste time copying and pasting context between different AI tools.
 2. **Token waste:** Using expensive, high-complexity models for trivial tasks drains API budgets.
 3. **Compaction loss:** Context is lost or truncated when conversations get too long or are manually summarized.
 4. **No intelligent delegation:** Lack of a unified system to decide which AI is best suited for a specific phase of development.
 5. **No shared memory:** Different AI CLIs operate in silos without a centralized memory store, leading to repetitive prompting.
+6. **Code search overhead:** Without structural code intelligence, AI agents must grep/read many files to locate symbols — wasting tokens and slowing orchestration.
 
 ## 3. Vision
 "One delegation call. The right AI. The right model. Every time."
@@ -21,6 +22,13 @@ Developers using 2+ AI CLIs simultaneously who need a unified, context-aware orc
 - Windows (primary)
 - macOS
 - Linux
+
+## 5.1. Prerequisites / Dependencies
+Before starting the setup, ensure that the following requirements are met or integrated:
+
+| Dependency | Purpose | Description |
+|---|---|---|
+| **CodeGraph** | MCP server for Claude Code | AST-based code search (tree-sitter). Provides sub-millisecond symbol lookup. Reduces token usage ~57% on code exploration tasks. |
 
 ## 6. Adapter Specifications
 
@@ -106,6 +114,16 @@ flowchart TD
 | `sdd-apply` | Codex | Copilot | **Codex writes ALL code** |
 | `sdd-verify` | Antigravity | Claude | Validates implementation against specs |
 | `sdd-archive` | Antigravity | Copilot | Finalizes and archives change |
+
+## 9.1. Ecosystem Integrations
+Iris operates alongside several key tools in the AI agent ecosystem:
+
+| Tool | Role |
+|---|---|
+| **Engram** | Persistent memory and IPC between agents |
+| **CodeGraph** | AST-based code intelligence — symbol lookup, call graphs, impact analysis |
+| **gentle-ai** | SDD phase templates and workflow methodology |
+| **Claude Code** | Primary MCP host that loads and invokes Iris |
 
 ## 10. Two-Phase Commit Flow
 For tasks with HIGH complexity, Iris requires user confirmation and presents a cost/time estimate before proceeding.
@@ -290,6 +308,6 @@ stateDiagram-v2
 - Custom adapter plugins beyond the core 4.
 - Cloud-hosted distributed SQLite syncing.
 - Mobile platform support.
-- GUI dashboard (CLI only for v1).
+- CLI dashboard (CLI only for v1).
 
 IRIS_COMPLETE
