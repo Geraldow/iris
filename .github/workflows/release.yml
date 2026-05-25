@@ -1,0 +1,125 @@
+name: Release — iris Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          REF="${GITHUB_REF}"
+          if [[ "$REF" =~ refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+            echo "✅ Version: $VERSION"
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            VERSION="0.0.0-manual"
+            echo "ℹ️  Manual dispatch — using version: $VERSION"
+          else
+            echo "❌ Could not extract version from: $REF"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Package ZIP
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          ZIP="dist/iris-v${VERSION}.zip"
+          mkdir -p dist
+
+          zip -r "$ZIP" \
+            src/ \
+            iris/ \
+            package.json \
+            package-lock.json \
+            tsconfig.json \
+            README.md \
+            LICENSE \
+            --exclude "node_modules/*" \
+            --exclude "dist/*" \
+            --exclude "db/*" \
+            --exclude ".gemini/*"
+
+          echo "📦 Package created: $ZIP"
+          ls -lh "$ZIP"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## iris v${{ steps.version.outputs.VERSION }}
+
+            Intelligent multi-adapter AI CLI orchestrator — MCP server for Claude Code.
+
+            ### Installation
+
+            1. Download `iris-v${{ steps.version.outputs.VERSION }}.zip`
+            2. Extract and run:
+            ```bash
+            npm install
+            npm run build
+            ```
+            3. Add to Claude Code MCP config:
+            ```json
+            {
+              "mcpServers": {
+                "iris": {
+                  "command": "node",
+                  "args": ["path/to/iris/dist/index.js"]
+                }
+              }
+            }
+            ```
+
+            ### Adapters
+            | Phase | Primary | Fallback |
+            |-------|---------|----------|
+            | explore | antigravity | claude |
+            | propose | claude | antigravity |
+            | design | antigravity | claude |
+            | apply | claude | codex |
+            | document | antigravity | claude |
+          files: |
+            dist/iris-v${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "  iris Release Pipeline Complete"
+          echo "  Version: v${{ steps.version.outputs.VERSION }}"
+          echo "════════════════════════════════════════"

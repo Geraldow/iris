@@ -1,0 +1,83 @@
+name: CI — iris Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - develop
+      - "release/**"
+      - "hotfix/**"
+
+jobs:
+  validate:
+    name: Validate Repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript compilation check
+        run: npx tsc --noEmit
+        # Validates that all source files compile without errors
+        # Does NOT produce output — dist/ is built only in release
+
+      - name: Validate JSON files
+        run: |
+          set -euo pipefail
+          ISSUES=0
+          for file in package.json tsconfig.json; do
+            if [ -f "$file" ]; then
+              if node -e "JSON.parse(require('fs').readFileSync('$file','utf8'))" 2>/dev/null; then
+                echo "  ✅ $file"
+              else
+                echo "  ❌ $file — invalid JSON"
+                ISSUES=$((ISSUES + 1))
+              fi
+            fi
+          done
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "❌ JSON validation failed"
+            exit 1
+          fi
+          echo "✅ All JSON files are valid"
+
+      - name: Validate prompt templates exist
+        run: |
+          set -euo pipefail
+          MISSING=0
+          PHASES="explore propose spec design tasks apply verify report document"
+          for phase in $PHASES; do
+            file="iris/prompts/sdd-${phase}.md"
+            if [ -f "$file" ]; then
+              echo "  ✅ sdd-${phase}.md"
+            else
+              echo "  ⚠️  Missing: $file"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            echo "⚠️  $MISSING prompt template(s) missing — review iris/prompts/"
+          else
+            echo "✅ All phase prompt templates present"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "  iris Validation Complete"
+          echo "════════════════════════════════════════"
