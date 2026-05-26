@@ -26,7 +26,14 @@ You are tasked with generating the requested document and writing it directly to
 2. **Read Task Context from Engram**: Use the `mem_get_observation` tool to retrieve the complete details of the context IDs provided: {contextIds}.
 3. **Read Source Files**: Analyze the retrieved context to identify any source files mentioned (such as `SKILL.md`, `RULES.md`, files in the `knowledge/` directory, model files, or source code) and read them from the file system using your file tools.
 4. **Follow Requested Structure**: Carefully read the task definition in the context IDs to understand the exact structure, format, and sections required for the {deliverable}.
-5. **Use Mermaid Diagrams**: When creating architecture, sequence, database design, or flow documents, include high-quality Mermaid diagrams. Ensure you reference the `mermaid-guide.md` for diagram rules.
+5. **Use Mermaid Diagrams**: When creating architecture, sequence, database design, or flow documents, include high-quality Mermaid diagrams. Follow these rules strictly:
+   - Always place the diagram before its explanation.
+   - Always prepend this EXACT init block — copy verbatim, do NOT change colors:
+     ```
+     %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#161b22', 'primaryTextColor': '#e6edf3', 'primaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'secondaryColor': '#1e1e2e', 'tertiaryColor': '#0d2a2a', 'background': '#0d1117', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+     ```
+   - Use `flowchart` for architecture and data flow, `sequenceDiagram` for API interactions, `erDiagram` for schemas.
+   - Never invent colors or skip the init block.
 6. **Write Directly to Disk**: Write the completed document DIRECTLY to the target path: {outputPath}. You MUST use your file system tools (e.g. creating/writing files) to write the content directly to the file system. Never just print the content in your response expecting the user to save it.
 7. **Complete the Task**: After successfully writing the file to {outputPath}, output a brief summary of what was generated, and end your response with exactly this line on its own:
 
