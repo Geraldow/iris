@@ -8,7 +8,19 @@ import { execSync, spawnSync } from 'child_process'
 import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
 import { join, basename } from 'path'
 
-const PACKAGE_ROOT = join(import.meta.dir, '..')
+function detectPackageRoot(): string {
+  const candidates = [
+    join(import.meta.dir, '..'),   // running from scripts/ inside project
+    import.meta.dir,                // running from project root
+    process.cwd(),                  // current working directory
+    'C:\\Development\\iris',        // default Alesco installation path
+  ]
+  for (const candidate of candidates) {
+    if (existsSync(join(candidate, 'package.json'))) return candidate
+  }
+  return 'C:\\Development\\iris'
+}
+const PACKAGE_ROOT = detectPackageRoot()
 const LOCAL_YAML = join(PACKAGE_ROOT, 'iris.local.yaml')
 const DIST_ENTRY = join(PACKAGE_ROOT, 'dist', 'index.js')
 const CLAUDE_CONFIG = join(process.env.USERPROFILE ?? process.env.HOME ?? '', '.claude', 'claude_desktop_config.json')
@@ -227,13 +239,13 @@ async function main() {
     if (!alescoPath) {
       info('Buscando Alesco en todas las unidades...')
       try {
-        const drives = execSync('wmic logicaldisk get name', { encoding: 'utf-8', timeout: 5000 })
-          .split('\n').map(l => l.trim()).filter(l => /^[A-Z]:$/.test(l))
+        const drivesOut = execSync('fsutil fsinfo drives', { encoding: 'utf-8', timeout: 5000 })
+        const drives = (drivesOut.match(/[A-Z]:\\/g) ?? [])
         for (const drive of drives) {
-          alescoPath = findAlescoFolder(drive + '\\', 4)
+          alescoPath = findAlescoFolder(drive, 4)
           if (alescoPath) break
         }
-      } catch { /* wmic not available */ }
+      } catch { /* fsutil not available */ }
     }
 
     if (alescoPath) {
