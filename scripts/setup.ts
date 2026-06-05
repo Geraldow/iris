@@ -6,7 +6,7 @@
 
 import { execSync, spawnSync } from 'child_process'
 import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
-import { join, dirname, basename } from 'path'
+import { join, basename } from 'path'
 
 const PACKAGE_ROOT = join(import.meta.dir, '..')
 const LOCAL_YAML = join(PACKAGE_ROOT, 'iris.local.yaml')
