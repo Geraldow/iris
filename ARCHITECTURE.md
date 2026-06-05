@@ -5,7 +5,7 @@ Iris is a Model Context Protocol (MCP) server built in TypeScript/Node.js that a
 
 ## 2. High-Level Architecture
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 flowchart TD
     CC[Claude Code] -->|MCP client| Iris[Iris MCP Server]
     Iris --> Router[Router]
@@ -18,7 +18,7 @@ flowchart TD
 
 ## 3. Main Delegation Flow (iris_delegate)
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 sequenceDiagram
     participant C as Claude Code
     participant I as Iris
@@ -51,7 +51,7 @@ sequenceDiagram
 
 ## 4. Router — Complexity Scoring
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 flowchart TD
     Input[Input: DelegateRequest] --> S1
     Input --> S2
@@ -90,7 +90,7 @@ flowchart TD
 
 ## 7. Two-Phase Commit Flow (HIGH complexity)
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 sequenceDiagram
     participant U as User
     participant I as iris_delegate
@@ -109,7 +109,7 @@ sequenceDiagram
 
 ## 8. Circuit Breaker States
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 stateDiagram-v2
     [*] --> Closed
     Closed --> Open : 3 consecutive failures
@@ -120,7 +120,7 @@ stateDiagram-v2
 
 ## 9. Engram Integration Flow
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 flowchart TD
     Exec[Adapter executes] --> Res[Result available]
     Res --> Sync[engram/sync.ts: saveResult]
@@ -131,7 +131,7 @@ flowchart TD
 
 ## 10. Template System — Fallback Resolver
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 flowchart TD
     Start[iris_delegate called with phase] --> CheckMem[Check Engram for template: iris/prompts/phase]
     CheckMem --> Found1{Found?}
@@ -145,7 +145,7 @@ flowchart TD
 
 ## 11. SQLite Schema Overview
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+%%{init: {'theme': 'default', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e293b', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6366f1', 'secondaryColor': '#f0fdf4', 'secondaryTextColor': '#1e293b', 'secondaryBorderColor': '#22c55e', 'tertiaryColor': '#fef3c7', 'tertiaryTextColor': '#1e293b', 'textColor': '#1e293b', 'clusterBkg': '#eff6ff', 'clusterBorder': '#3b82f6'}}}%%
 erDiagram
     sessions ||--o{ tasks : contains
     adapter_budget ||--o{ tasks : tracks

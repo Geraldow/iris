@@ -10,7 +10,15 @@ export type Phase =
   | 'document'
 
 export type ComplexityLevel = 'low' | 'medium' | 'high'
-export type AdapterName = 'claude' | 'antigravity' | 'copilot' | 'codex'
+export type AdapterName = 'claude' | 'antigravity' | 'copilot' | 'codex' | 'kilo' | 'cursor' | 'opencode'
+
+export type OdooTaskType =
+  | 'odoo-source' | 'odoo-orm' | 'odoo-view' | 'odoo-security'
+  | 'odoo-wizard' | 'odoo-report' | 'odoo-owl' | 'odoo-controller'
+  | 'odoo-mail' | 'odoo-portal' | 'odoo-migration' | 'odoo-test'
+  | 'odoo-debug' | 'odoo-ops' | 'odoo-ci' | 'odoo-api'
+  | 'odoo-commit' | 'odoo-pr' | 'odoo-changelog' | 'odoo-module'
+  | 'odoo-accounting' | 'odoo-stock'
 export type TaskStatus =
   | 'pending'
   | 'running'
@@ -118,6 +126,40 @@ export interface BudgetStatus {
   current_spend_usd: number
   reset_date: string
   is_over_budget: boolean
+}
+
+// ---------- Odoo ----------
+
+export interface OdooContext {
+  version: string
+  edition: 'community' | 'enterprise'
+  moduleName: string
+  alesco_path: string
+  enterprise_path: string
+  community_path: string
+  activeBranch: string
+  taskType?: OdooTaskType
+  activeRules: string[]
+  knowledgeFiles: string[]
+}
+
+export interface IrisLocalConfig {
+  alesco_path: string
+  enterprise_path: string
+  community_path: string
+}
+
+export interface OdooRule {
+  id: string
+  title: string
+  description: string
+  triggerOn: string[]
+}
+
+export interface EnterpriseSearchResult {
+  file: string
+  line: number
+  content: string
 }
 
 // ---------- Config ----------

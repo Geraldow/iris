@@ -1,210 +1,204 @@
-# Iris Product Requirements Document (PRD)
+# Iris — Product Requirements Document
 
 ## 1. Executive Summary
-Iris is an intelligent, multi-adapter AI CLI orchestrator designed to route tasks to the most suitable AI model (Claude, Antigravity, Copilot, or Codex) based on phase and complexity. By maintaining shared memory through Engram and intelligently delegating workloads, Iris eliminates manual context management and ensures the right AI is used for the job, saving tokens and improving developer velocity.
+Iris is an enterprise-grade, multi-adapter Model Context Protocol (MCP) server written in TypeScript/Node.js. It acts as an intelligent orchestration bus that coordinates, delegates, and executes software engineering tasks across a swarm of seven specialized AI CLI engines: Claude, Antigravity, GitHub Copilot, OpenCode, Kilo, Cursor-Agent, and Codex. 
+
+By analyzing developer instructions through a multi-signal complexity classifier, Iris routes workloads to the most optimal AI adapter, manages API spending budgets and circuit breakers, and coordinates persistent context using a shared team memory bus (Engram synchronized bidirectionally via Google Drive). Iris eliminates context fragmentation, lowers token consumption by ~57% utilizing CodeGraph's AST-based search, and ensures the correct model is selected for every phase of development.
+
+---
 
 ## 2. Problem Statement
-Iris solves the following 6 pain points:
-1. **Manual context pasting:** Developers waste time copying and pasting context between different AI tools.
-2. **Token waste:** Using expensive, high-complexity models for trivial tasks drains API budgets.
-3. **Compaction loss:** Context is lost or truncated when conversations get too long or are manually summarized.
-4. **No intelligent delegation:** Lack of a unified system to decide which AI is best suited for a specific phase of development.
-5. **No shared memory:** Different AI CLIs operate in silos without a centralized memory store, leading to repetitive prompting.
-6. **Code search overhead:** Without structural code intelligence, AI agents must grep/read many files to locate symbols — wasting tokens and slowing orchestration.
+Iris addresses the following six developer friction points:
+1. **Manual Context Pasting:** Developers waste hours copying and pasting environment states, logs, and files between independent AI CLI tools and shell sessions.
+2. **API Token and Budget Waste:** Invoking high-complexity, expensive models (e.g., Claude Opus) for trivial tasks (e.g., directory creation, simple shell commands) unnecessarily drains budgets.
+3. **Context Loss (Compaction Limits):** Chat windows suffer from token bloat. Long conversations trigger context compaction, which degrades or discards critical architectural constraints.
+4. **No Intelligent Delegation:** Developers lack a unified routing system to decide which AI and reasoning tier is best suited for a specific phase of the software development lifecycle.
+5. **No Shared Memory:** Different AI CLI engines operate in silos without a centralized memory store, leading to repetitive prompting and loss of context.
+6. **Code Search Overhead:** Without structural code intelligence, AI agents must grep/read many files to locate symbols — wasting tokens and slowing orchestration.
+
+---
 
 ## 3. Vision
-"One delegation call. The right AI. The right model. Every time."
+> "One delegation call. The right AI. The right model. Every time."
+
+---
 
 ## 4. Target Users
-Developers using 2+ AI CLIs simultaneously who need a unified, context-aware orchestrator to manage their workflows efficiently.
+Software developers using two or more AI CLIs simultaneously who require a unified, context-aware orchestrator to manage their workflows efficiently.
+
+---
 
 ## 5. Supported Platforms
-- Windows (primary)
-- macOS
-- Linux
+- **Windows (Primary):** Features custom Terminal execution modes using Windows Terminal (`wt`).
+- **macOS**
+- **Linux**
 
-## 5.1. Prerequisites / Dependencies
-Before starting the setup, ensure that the following requirements are met or integrated:
+---
 
-| Dependency | Purpose | Description |
-|---|---|---|
-| **CodeGraph** | MCP server for Claude Code | AST-based code search (tree-sitter). Provides sub-millisecond symbol lookup. Reduces token usage ~57% on code exploration tasks. |
+## 6. CLI Adapter Specifications
+Iris integrates seven specialized CLI adapters under a unified execution interface. Each adapter maps abstract effort levels to its local CLI syntax and parses distinct output formats back into a standardized JSON response.
 
-## 6. Adapter Specifications
-
-| Adapter | CLI Invocation Pattern | Model Options | Effort/Reasoning Control | Best-for Phases | Constraints |
+| Adapter | CLI Invocation Pattern | Model Options | Effort / Reasoning Control | Output Parsing Strategy | Notes & Overheads |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Claude** | `claude -m {model} -p "{prompt}"` | Haiku, Sonnet, Opus | `--effort` (low/medium/high) | `sdd-explore`, `sdd-propose` | High token cost for Opus |
-| **Antigravity** | `agy --print "{prompt}" --dangerously-skip-permissions --print-timeout 15m0s` | Gemini 3.5 Flash (Medium/High), Gemini 3.1 Pro (High) | **NO EFFORT FLAG.** Model set via `~/.gemini/antigravity-cli/settings.json`. Iris writes model before exec, restores after. | `sdd-explore`, `sdd-propose`, `sdd-verify` | Full binary path required: `%LOCALAPPDATA%\agy\bin\agy.exe`. No `--model` flag. |
-| **Copilot** | `gh copilot -m {model} --reasoning-effort {effort} "{prompt}"` | gpt-4o-mini, gpt-4o | `--reasoning-effort` | Fallback | Requires GitHub auth |
-| **Codex** | `codex exec -m {model} -c reasoning_effort="{effort}" "{prompt}"` | codex-base, codex-pro | `-c reasoning_effort="{effort}"` | `sdd-apply` (ALL CODE WRITTEN HERE) | Focused solely on code generation |
+| **Claude** | `claude -p "{prompt}" --model {model} --effort {level} --output-format json --dangerously-skip-permissions` | `haiku` (low), `sonnet` (med), `opus` (high/xhigh) | `--effort` flag: `low / medium / high / xhigh / max` | JSON wrapper → extract `result.result` (content is Markdown) | Best for code generation and code review. Opus has high latency. |
+| **Antigravity (agy)** | `agy --print "{prompt}" --dangerously-skip-permissions --print-timeout 15m0s` | `Gemini 3.5 Flash (Low/Medium/High)`, `Gemini 3.1 Pro (Low/High)`, `Claude Opus 4.6 (Thinking)`, `GPT-OSS 120B (Medium)` | **No CLI flag.** Iris writes exact model string to `~/.gemini/antigravity-cli/settings.json` before exec. | Markdown via stdout direct. | Best for documentation, architecture prose, and diagrams. 15-min timeout supported. |
+| **Copilot** | `copilot -p "{prompt}" --model {model}` | `gpt-5-mini` (0.4 cr), `gpt-5.4-mini`, `gpt-5.2-codex`, `auto`, `claude-haiku-4.5`, `gemini-3.1-pro`, `gpt-5.2` | `--model` flag only. No reasoning-effort flag. | Markdown text + **strip trailing stats block** (from "Changes / AI Credits / Tokens" line). | `copilot` == `gh copilot` — same binary, both aliases work. |
+| **OpenCode** | `opencode run --format json -m {model} --variant {v} "{prompt}"` | `opencode/deepseek-v4-flash-free`, `opencode/mimo-v2.5-free`, `opencode/minimax-m3-free`, `opencode/nemotron-3-super-free`, `opencode/big-pickle` | `--variant` flag: `minimal / low / medium / high / max` (where supported) | JSONL stream → filter `type="text"` → concatenate `part.text` (Markdown content). | OpenCode Zen ONLY — OpenRouter not configured. Free models only. |
+| **Kilo** | `kilo run --format json -m {model} --variant {v} "{prompt}"` | `kilo/kilo-auto/free`, `kilo/qwen/qwen3.7-plus:free`, `kilo/stepfun/step-3.7-flash:free`, `kilo/nvidia/nemotron-3-super-120b-a12b:free`, `kilo/poolside/laguna-m.1:free`, `kilo/nvidia/nemotron-3-nano-omni-30b:free` | `--variant` flag: `default / instant / thinking / low / medium / high` (model-dependent) | JSONL stream → identical parser to OpenCode. Content is Markdown. | Free-tier only (`:free` suffix). kilo-auto/free provides internal routing. |
+| **Cursor-Agent** | `cursor-agent -p "{prompt}" --output-format text --model auto --trust` | `auto` (free plan only) | No effort flag. `--trust` is MANDATORY for headless execution. | Markdown via stdout direct. | Free plan: named models require paid plan. `--trust` bypasses interactive confirmation. |
+| **Codex** | `codex exec "{prompt}" -m {model} -s workspace-write -c "approval_policy=never" --skip-git-repo-check` | `gpt-5.4-mini` (low/med), `gpt-5.5` (high) | `-m` flag for model selection only. | Markdown via stdout. Stderr contains session metadata (ignore). | Requires cwd = project directory. ~20k token base overhead. ChatGPT account required. NOT in automatic routing — explicit `adapter="codex"` only. |
 
-## 7. Complexity Detection Algorithm
-The complexity of a task is determined by evaluating 4 signals:
-1. **Scope of Changes:** Number of files to create/modify.
-2. **Context Size:** Number of tokens required to understand the current state.
-3. **Architectural Impact:** Whether new patterns or structures are introduced.
-4. **Dependency Resolution:** Level of external library interactions.
+---
 
-**Scoring Table (Total 100 points):**
-- Scope (0-30 points)
-- Context Size (0-30 points)
-- Architectural Impact (0-20 points)
-- Dependency Resolution (0-20 points)
-
-**Thresholds:**
-- **LOW:** 0-35 points
-- **MEDIUM:** 36-70 points
-- **HIGH:** 71-100 points
+## 7. 5-Layer Architecture
+Iris is structured into five distinct, decoupled layers:
 
 ```mermaid
 flowchart TD
-    A[Task Received] --> B{Calculate Score}
-    B --> C[Score 0-35]
-    B --> D[Score 36-70]
-    B --> E[Score 71-100]
-    C --> F[LOW Complexity]
-    D --> G[MEDIUM Complexity]
-    E --> H[HIGH Complexity]
-    F --> I[Assign Low-Tier Model]
-    G --> J[Assign Mid-Tier Model]
-    H --> K[Trigger Two-Phase Commit]
+    subgraph Interface_Layer [1. Interface Layer]
+        API["MCP Tools API (iris_delegate, iris_setup)"]
+        WT["Windows Terminal (wt) Launcher"]
+    end
+
+    subgraph Orchestration_Layer [2. Orchestration Layer]
+        Orch["SDDOrchestrator"]
+        Class["TaskClassifier (Complexity Engine)"]
+        CB["ContextBuilder (CodeGraph + Engram)"]
+        Gate["Two-Phase Commit (2PC) Confirm Gate"]
+    end
+
+    subgraph Adapter_Layer [3. Adapter Layer]
+        Base["BaseAdapter / IAdapter Interface"]
+        Adapters["7 CLI Adapters (Claude, agy, copilot, opencode, kilo, cursor, codex)"]
+    end
+
+    subgraph Infrastructure_Layer [4. Infrastructure Layer]
+        DB[("SQLite Store (better-sqlite3)")]
+        Breaker["CircuitBreaker State Manager"]
+        Budget["BudgetManager"]
+        Config["Config Parser (config.ts)"]
+    end
+
+    subgraph External_CLI_Layer [5. External CLI Layer]
+        Execs["CLI Executables (execa / wt processes)"]
+    end
+
+    Interface_Layer --> Orchestration_Layer
+    Orchestration_Layer --> Adapter_Layer
+    Adapter_Layer --> Infrastructure_Layer
+    Infrastructure_Layer --> External_CLI_Layer
 ```
 
-## 8. Model + Effort Matrix
+1. **Interface Layer:** Manages client inputs and standard tool definitions (`iris_delegate`, `iris_setup`). Spawns tasks either in visible Windows Terminal (`wt`) window or silently in the background.
+2. **Orchestration Layer:** Controls development workflow flows (`SDDOrchestrator`), scores incoming request complexity (`TaskClassifier`), aggregates context (`ContextBuilder`), and prompts for confirmation under high-complexity levels.
+3. **Adapter Layer:** Outlines the core translation mappings. Standardizes raw outputs (e.g. converting JSONL stream objects to plain text) so the orchestrator receives a uniform result.
+4. **Infrastructure Layer:** Handles database persistence, budgets, config parameters, and manages the circuit breaker's lifecycle.
+5. **External CLI Layer:** Houses the physical CLI executables installed on the system, executed as native OS processes.
 
-### Claude Adapter
-| Complexity | Model | Effort |
-| :--- | :--- | :--- |
-| LOW | Haiku | low |
-| MEDIUM | Sonnet | medium |
-| HIGH | Opus | high |
+---
 
-### Antigravity Adapter
-| Complexity | Model | Effort Control |
-| :--- | :--- | :--- |
-| LOW | Gemini 3.5 Flash (Medium) | N/A |
-| MEDIUM | Gemini 3.5 Flash (High) | N/A |
-| HIGH | Gemini 3.1 Pro (High) | N/A |
+## 8. Core Components
+Iris introduces several core components to separate responsibilities and improve orchestration reliability:
 
-### Copilot Adapter
-| Complexity | Model | Reasoning Effort |
-| :--- | :--- | :--- |
-| LOW | gpt-4o-mini | low |
-| MEDIUM | gpt-4o | medium |
-| HIGH | gpt-4o | high |
+- **TaskClassifier:** A scoring engine that calculates complexity from 0 to 100 based on:
+  - **Scope of Changes (0-30 pts):** Evaluated from prompt instruction word count.
+  - **Context Size (0-30 pts):** Based on active Engram observations (`contextIds`).
+  - **Architectural Impact (0-20 pts):** Weighted by phase and design-centric keywords (*refactor*, *schema*, *interface*).
+  - **Dependency Resolution (0-20 pts):** Driven by setup keywords (*npm*, *install*, *library*).
+  - **Complexity Mapping:** 0-35 points maps to **LOW**, 36-70 to **MEDIUM**, and 71-100 to **HIGH** complexity.
+- **ContextBuilder:** Decouples context compilation. Collects local state, structural symbols from **CodeGraph**, observations from **Engram**, and parses rules from the local `iris_context.md`.
+- **SDDOrchestrator:** Coordinates Spec-Driven Development execution. Automatically manages the transition between phases (`/sdd explore` -> `/sdd propose` -> `/sdd spec`, etc.) by invoking the primary adapter defined in the routing matrix.
+- **`iris_context.md`:** The localized context reference file. Contains repository-specific standards, active development changesets, and architectural constraints. It acts as the local entry point for workspace configurations, while raw session states reside in Engram.
+- **`prompts/` Template System:** A structured folder of 8 specialized markdown prompt templates used to seed delegation requests:
+  1. `code.md`: Directives for generating clean, modular code.
+  2. `docs.md`: blueprints for writing developer guides.
+  3. `diagram.md`: Instructions for Mermaid diagrams.
+  4. `explore.md`: Seeding prompts for codebase exploration.
+  5. `specs.md`: Validation rules for behavioral specs (RFC 2119).
+  6. `synthesis.md`: Compaction rules to summarize conversation histories.
+  7. `review.md`: Checksheets for verification reviews.
+  8. `tests.md`: Test generation assertions.
 
-### Codex Adapter
-| Complexity | Model | Reasoning Effort |
-| :--- | :--- | :--- |
-| LOW | codex-base | low |
-| MEDIUM | codex-pro | medium |
-| HIGH | codex-pro | high |
+---
 
-## 9. Phase → Adapter Delegation Table
+## 9. Shared Memory Architecture
+To achieve zero context fragmentation and zero cold starts across sessions, Iris utilizes a **Shared Memory Architecture**:
+- All 7 CLI adapters are configured with native tools/configurations to communicate directly with MCP servers.
+- The `iris_setup()` function automatically verifies dependencies, configures environment variables, and registers the local **Engram** memory server and **CodeGraph** AST symbol engine for all adapters.
+- When an adapter executes (even in an isolated terminal or background process), it retrieves task parameters and recent workspace observations directly from Engram using unique topic keys and updates observations asynchronously upon completion. This removes the need for local file-system state transfer.
 
-| SDD Phase | Primary Adapter | Fallback Adapter | Notes |
-| :--- | :--- | :--- | :--- |
-| `sdd-init` | Antigravity | Claude | Initializes Engram |
-| `sdd-explore` | Claude | Antigravity | Broad conceptual exploration |
-| `sdd-propose` | Claude | Antigravity | Drafts initial proposal |
-| `sdd-spec` | Antigravity | Claude | Writes rigorous specifications |
-| `sdd-design` | Antigravity | Claude | Architecture and system design |
-| `sdd-tasks` | Claude | Copilot | Breakdown into actionable tasks |
-| `sdd-apply` | Codex | Copilot | **Codex writes ALL code** |
-| `sdd-verify` | Antigravity | Claude | Validates implementation against specs |
-| `sdd-archive` | Antigravity | Copilot | Finalizes and archives change |
+---
 
-## 9.1. Ecosystem Integrations
-Iris operates alongside several key tools in the AI agent ecosystem:
+## 10. SDD Phase → Adapter Delegation Table
+Iris routes each Spec-Driven Development phase to a specialized primary adapter to optimize quality, execution speed, and token cost.
 
-| Tool | Role |
-|---|---|
-| **Engram** | Persistent memory and IPC between agents |
-| **CodeGraph** | AST-based code intelligence — symbol lookup, call graphs, impact analysis |
-| **gentle-ai** | SDD phase templates and workflow methodology |
-| **Claude Code** | Primary MCP host that loads and invokes Iris |
+| SDD Phase | Primary Adapter | Model | Fallback | MCP Used | Effort | Output File |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`sdd-explore`** | `kilo` | `kilo-auto/free` | `opencode` | CodeGraph (iris queries before delegating) | low | `00-explore.md` |
+| **`sdd-propose`** | `cursor-agent` | `auto` | `kilo` | Engram (reads explore context) | low | `01-proposal.md` |
+| **`sdd-spec`** | `copilot` | `gpt-5-mini` | `cursor-agent` | Engram (reads explore + proposal) | med | `02-spec.md` |
+| **`sdd-design`** | `antigravity` | `Gemini 3.1 Pro (High)` | `claude` | Engram (reads all previous phases) | high | `03-design.md` |
+| **`sdd-tasks`** | `cursor-agent` | `auto` | `kilo` | Engram (reads design) | low | `04-tasks.md` |
+| **`sdd-apply`** | `claude` | `sonnet` (high effort) | `antigravity` | CodeGraph + Engram | high | code changes |
+| **`sdd-verify`** | `claude` | `haiku` (med effort) | `copilot` | Engram (reads tasks + apply) | med | `05-verify.md` |
+| **`sdd-archive`** | `antigravity` | `Gemini 3.5 Flash (High)` | `opencode` | Engram (reads all) → writes docs/ | med | `06-archive.md` |
+| **`sdd-report`** | `antigravity` | `Gemini 3.5 Flash (Med)` | `copilot` | Engram → executive summary | med | `report.md` |
 
-## 10. Two-Phase Commit Flow
-For tasks with HIGH complexity, Iris requires user confirmation and presents a cost/time estimate before proceeding.
+**Documentation flow:** agy documents each phase and writes the corresponding `.md` file to `docs/{feature}/sdd/` after completion. Humans review and approve before the next phase begins.
+
+---
+
+## 11. Documentation Structure (Screaming Architecture)
+
+Each feature is self-contained in `docs/`. The feature name screams first — the process (sdd/) is subordinate. Humans review SDD artifacts phase by phase before approving continuation.
+
+```text
+docs/
+  {feature-name}/
+    sdd/
+      00-explore.md       ← agy writes after sdd-explore
+      01-proposal.md      ← agy writes after sdd-propose
+      02-spec.md          ← agy writes after sdd-spec
+      03-design.md        ← agy writes after sdd-design
+      04-tasks.md         ← agy writes after sdd-tasks
+      05-verify.md        ← agy writes after sdd-verify
+      06-archive.md       ← agy writes after sdd-archive
+      report.md           ← agy writes after sdd-report (executive summary)
+    diagrams/
+      arch-overview.excalidraw    ← hub-and-spoke system view
+      arch-layers.excalidraw      ← n-tier 5-layer view
+      flow-routing.excalidraw     ← routing decision flow
+      flow-sequence.excalidraw    ← request/response sequence
+      uml-use-cases.excalidraw    ← MCP tool use cases
+      uml-erd.excalidraw          ← entity relationships
+    logic.md              ← systematic logic in fluid prose (human-readable)
+```
+
+Diagram naming convention: prefix indicates type (`arch-`, `flow-`, `uml-`, `state-`, `data-`). Files within each type are flat — no nested subfolders.
+
+---
+
+## 12. Circuit Breaker & Quota Handling
+To prevent cascading adapter failures (network limits, rate limits, or credentials loss), Iris maintains an in-memory `CircuitBreaker` wrapper around every adapter.
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant Iris
-    participant Adapter
-    
-    User->>Iris: Delegate Task (High Complexity)
-    Iris->>Iris: Detect HIGH Complexity
-    Iris->>Adapter: Request Cost Estimate
-    Adapter-->>Iris: Return Cost Estimate
-    Iris->>User: Display Cost & Request Confirmation (Phase 1)
-    alt Confirmed
-        User->>Iris: Approve
-        Iris->>Adapter: Execute Task (Phase 2)
-        Adapter-->>Iris: Return Result
-    else Rejected
-        User->>Iris: Reject
-        Iris->>User: Abort Task
-    end
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open : 3 consecutive failures OR quota_exceeded (HTTP 429)
+    Open --> HalfOpen : 5-minute timeout (300000ms) elapsed
+    HalfOpen --> Closed : Next test request succeeds
+    HalfOpen --> Open : Next test request fails
 ```
 
-## 11. Template System
-Iris uses a hierarchical template system to seed tasks:
-- **Structure:** Stored in `iris/prompts/`
-- **Seed:** `meta.md` acts as the foundational seed for new projects.
-- **Fallback Resolver:** If a specific prompt template is missing, Iris resolves it via:
-  1. **Engram:** Checks shared memory for previously cached templates.
-  2. **Repo:** Checks the local repository for project-specific overrides.
-  3. **Antigravity Creates:** If not found, Antigravity is invoked to generate the missing template dynamically.
+- **Closed State:** Requests route directly to the primary adapter.
+- **Open State:** The adapter is blocked. Requests immediately route to the fallback adapter.
+- **Half-Open State:** Allows a single request to test if the adapter has recovered.
+- **Quota Exceeded (HTTP 429) Bypass:** If an adapter returns a rate limit or quota exceeded error, the circuit breaker immediately transitions to **Open** without waiting for the 3-failure threshold, preventing unnecessary latency and falling back instantly to the secondary adapter.
 
-## 12. MCP Tools API Reference
+---
 
-```typescript
-/**
- * Delegate a task to an adapter.
- */
-function iris_delegate(taskDescription: string, phase: string, forcedAdapter?: string): Promise<string>;
-
-/**
- * Get status of an ongoing task.
- */
-function iris_status(taskId: string): Promise<TaskStatus>;
-
-/**
- * Retrieve execution history.
- */
-function iris_history(limit?: number): Promise<TaskHistory[]>;
-
-/**
- * Manage task lifecycle (create, update, cancel).
- */
-function iris_task(action: 'create' | 'update' | 'cancel', payload: any): Promise<any>;
-
-/**
- * Get or update Iris configuration.
- */
-function iris_config(action: 'get' | 'set', key?: string, value?: any): Promise<any>;
-
-/**
- * Verify and auto-configure Engram per adapter.
- */
-function iris_setup(adapterName: string): Promise<boolean>;
-```
-
-## 13. Execution Modes
-- **Terminal Mode (`wt`):** Executes the CLI adapter in a visible Windows Terminal tab, allowing the user to monitor streaming output.
-- **Subprocess Mode (`execa`):** Executes the CLI adapter silently in the background, capturing standard output and error streams.
-- **Completion Marker:** Regardless of execution mode, when a task is finished, the adapter MUST output `IRIS_COMPLETE` on its own line.
-
-## 14. Engram Integration
-**CONTEXT.md is ELIMINATED in final architecture. All AIs read from Engram via MCP.**
-- **Universal Access:** All 4 adapters (Claude, Antigravity, Copilot, Codex) have Engram MCP configured.
-- **Auto-Configuration:** `iris_setup` verifies and auto-configures Engram for each adapter upon initialization.
-- **Topic Key Conventions:** Memory is structured around standardized `topic_key` names (e.g., `project:architecture`, `task:current`).
-- **Task Flow:** Adapters retrieve context from Engram, execute their task, and save the result/observations back to Engram.
-
-## 15. SQLite Schema
+## 13. SQLite Schema
+The persistence layer tracks sessions, task history, adapter configurations, and API spend:
 
 ```sql
 CREATE TABLE sessions (
@@ -222,7 +216,9 @@ CREATE TABLE tasks (
     complexity TEXT NOT NULL,
     status TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    completed_at DATETIME
+    completed_at DATETIME,
+    engram_id INTEGER,
+    cost_usd REAL DEFAULT 0.0
 );
 
 CREATE TABLE adapter_budget (
@@ -240,37 +236,104 @@ CREATE TABLE adapter_config (
 );
 ```
 
-## 16. Folder Structure
+---
+
+## 14. Two-Phase Commit Flow
+For tasks evaluated as **HIGH complexity**, Iris halts execution, compiles a detailed execution plan (including model, effort level, and cost estimate), and requests explicit developer authorization before executing.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Developer
+    participant Iris as Iris Orchestrator
+    participant Adapter as AI Adapter
+    
+    Developer->>Iris: iris_delegate(Task description)
+    Note over Iris: Score task complexity...<br/>Evaluated as HIGH complexity
+    Iris->>Iris: Compile execution plan
+    Iris-->>Developer: Return pending_confirmation + plan + confirm_token
+    
+    Note over Developer: Developer reviews cost & plan
+    alt Confirmed
+        Developer->>Iris: iris_delegate(confirm=confirm_token)
+        Iris->>Adapter: Execute Task (Phase 2)
+        Adapter-->>Iris: Return Output
+        Iris-->>Developer: Return standard result
+    else Rejected
+        Developer->>Iris: Decline / Cancel
+        Iris->>Iris: Cancel task & release token
+        Iris-->>Developer: Aborted
+    end
+```
+
+---
+
+## 15. Folder Structure
+The Iris project layout implements a clean, screaming architecture structure:
 
 ```text
 src/
-├── adapters/        # Adapter implementations (Claude, Antigravity, Copilot, Codex)
-├── core/            # Core orchestrator logic (complexity, delegation, execution)
-├── mcp/             # MCP tools server implementation (iris_delegate, etc.)
-├── db/              # SQLite database schema and connection logic
-├── engram/          # Engram MCP integration and auto-setup routines
-├── prompts/         # Template system and meta.md
-└── utils/           # Shared utilities (logger, config parser)
+├── adapters/         # Adapter implementations (base, claude, antigravity, copilot, opencode, kilo, cursor-agent, codex)
+├── core/             # Orchestrator core: TaskClassifier, ContextBuilder, SDDOrchestrator
+├── mcp/              # MCP server protocol, transport, and tools definitions
+├── store/            # SQLite connection, budget database, and task repository
+├── prompts/          # The 8 standard templates (code.md, docs.md, etc.)
+├── router/           # Routing: selector.ts, circuit-breaker.ts
+├── executor/         # Process execution: terminal.ts (wt), subprocess.ts (execa)
+├── types/            # TypeScript interfaces and shared schemas
+└── utils/            # Logging, config parsing, and file system utilities
 ```
 
-## 17. Configuration Reference
-`~/.iris/config.json` defaults:
+---
+
+## 16. Configuration Reference
+The configuration file is located at `~/.iris/config.json`. The following represents the default configuration:
 
 ```json
 {
-  "general": {
-    "execution_mode": "subprocess",
-    "log_level": "info"
-  },
+  "confirm_threshold": "high",
+  "execution_mode": "terminal",
   "adapters": {
-    "claude": { "enabled": true, "default_model": "Sonnet" },
-    "antigravity": { "enabled": true, "default_model": "Gemini 3.5 Flash (Medium)" },
-    "copilot": { "enabled": true, "default_model": "gpt-4o-mini" },
-    "codex": { "enabled": true, "default_model": "codex-pro" }
+    "claude": {
+      "enabled": true,
+      "priority": 3,
+      "daily_budget_usd": 5.0
+    },
+    "antigravity": {
+      "enabled": true,
+      "priority": 1,
+      "daily_budget_usd": 0.0
+    },
+    "copilot": {
+      "enabled": true,
+      "priority": 2,
+      "daily_budget_usd": 0.0
+    },
+    "opencode": {
+      "enabled": true,
+      "priority": 1,
+      "daily_budget_usd": 0.0
+    },
+    "kilo": {
+      "enabled": true,
+      "priority": 1,
+      "daily_budget_usd": 0.0
+    },
+    "cursor-agent": {
+      "enabled": true,
+      "priority": 1,
+      "daily_budget_usd": 0.0
+    },
+    "codex": {
+      "enabled": true,
+      "priority": 2,
+      "daily_budget_usd": 2.0
+    }
   },
   "engram": {
     "auto_setup": true,
-    "default_topic": "default"
+    "default_topic": "default",
+    "gdrive_sync": true
   },
   "circuit_breaker": {
     "max_failures": 3,
@@ -279,35 +342,30 @@ src/
 }
 ```
 
-## 18. Circuit Breaker
-Iris implements a circuit breaker to handle adapter failures, tracking failure counts, determining fallback chains, and setting `unavailable_until` lockouts.
+---
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open : max_failures reached
-    Open --> HalfOpen : reset_timeout_ms elapsed
-    HalfOpen --> Closed : success
-    HalfOpen --> Open : failure
-```
-- **Closed:** Normal operation. Requests flow to the primary adapter.
-- **Open:** Primary adapter is blocked. Requests immediately route to the fallback adapter.
-- **Half-Open:** Allows a single test request to the primary adapter to check recovery.
+## 17. Ecosystem Integrations
 
-## 19. Success Criteria
-- [x] Orchestrator successfully delegates tasks based on complexity.
-- [x] Engram MCP is fully configured and functional for all 4 adapters.
-- [x] CONTEXT.md dependency is entirely removed.
-- [x] Two-Phase Commit is triggered for HIGH complexity tasks.
-- [x] Codex is exclusively used for code generation in the `sdd-apply` phase.
-- [x] Fallback mechanisms via the Circuit Breaker operate correctly.
-- [x] Template resolution falls back sequentially (Engram -> Repo -> Antigravity).
-- [x] SQLite accurately tracks tasks, sessions, and adapter states.
+### 17.1. Engram + Google Drive Bidirectional Sync
+To facilitate seamless collaboration across distributed teams, local Engram databases are synchronized bidirectionally using a Google Drive backup system:
+- **Personal Directories:** Teammates sync their database records to personal folders in Google Drive, preventing locking issues.
+- **Auto-Import Daemon:** A background process (`engram-drive` service) scans Google Drive directories and imports new observations; observations from other teammates are seamlessly integrated.
+- **Decentralized IPC:** Ensures all adapters operate with updated shared context, eliminating central coordination servers.
 
-## 20. Out of Scope (v1)
-- Custom adapter plugins beyond the core 4.
-- Cloud-hosted distributed SQLite syncing.
-- Mobile platform support.
-- CLI dashboard (CLI only for v1).
+### 17.2. CodeGraph AST Integration
+Iris integrates directly with the **CodeGraph** AST search tool. During the explore and design phases, CodeGraph provides sub-millisecond symbol lookup, call hierarchy graphs, and dependency impact maps using tree-sitter. This reduces adapter exploration token usage by **~57%**.
+
+---
+
+## 18. Success Criteria
+- [ ] **TaskClassifier** accurately scores instructions across the 4 signals and maps them to correct tiers (LOW, MEDIUM, HIGH).
+- [ ] All 7 adapters (**claude**, **antigravity**, **copilot**, **opencode**, **kilo**, **cursor-agent**, **codex**) successfully launch, execute CLI instructions, and return standardized plain text.
+- [ ] **CircuitBreaker** transitions to **Open** immediately upon encountering a `quota_exceeded` / HTTP 429 error and routes tasks to fallbacks.
+- [ ] **Shared Memory Architecture** compiles context successfully via CodeGraph & Engram, eliminating cold starts across sessions.
+- [ ] **ContextBuilder** resolves missing prompt templates in sequence: Local Prompts Folder -> Engram -> Antigravity creation.
+- [ ] **Two-Phase Commit** prompts for developer approval on HIGH complexity tasks, blocking downstream subprocess execution until confirmed.
+- [ ] **Screaming documentation** structure is maintained inside `docs/` for routing, memory, and adapter domains.
+
+---
 
 IRIS_COMPLETE

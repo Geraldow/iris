@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { z } from 'zod'
@@ -14,15 +14,24 @@ import { ClaudeAdapter } from '../adapters/claude.js'
 import { AntigravityAdapter } from '../adapters/antigravity.js'
 import { CopilotAdapter } from '../adapters/copilot.js'
 import { CodexAdapter } from '../adapters/codex.js'
+import { KiloAdapter } from '../adapters/kilo.js'
+import { CursorAdapter } from '../adapters/cursor.js'
+import { OpenCodeAdapter } from '../adapters/opencode.js'
 import { homedir } from 'os'
 import { runSubprocess } from '../executor/subprocess.js'
 import { runInTerminal } from '../executor/terminal.js'
 import { saveTaskPrompt } from '../engram/sync.js'
-import type { IAdapter, AdapterName, DelegateRequest, DelegateResult, PendingPlan } from '../types/index.js'
+import { buildOdooContext, formatOdooContextForPrompt } from '../context/odoo.js'
+import { detectTaskType } from '../context/odoo-selector.js'
+import { injectKnowledgeContext } from '../context/rules.js'
+import { generateDiagram } from '../diagrams/generator.js'
+import type { IAdapter, AdapterName, OdooTaskType, DelegateRequest, DelegateResult, PendingPlan } from '../types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const PROMPTS_DIR = join(__dirname, '../../../iris/prompts')
+const PACKAGE_ROOT = join(__dirname, '../../')
+// Resolved relative to src/tools/delegate.ts → ../../ = package root → prompts/
+const PROMPTS_DIR = join(PACKAGE_ROOT, 'prompts')
 
 // D4: Two-phase commit token store (in-memory, expires with process)
 const pendingTokens = new Map<string, { plan: PendingPlan; expiresAt: number; request: DelegateRequest }>()
@@ -47,6 +56,9 @@ const ADAPTERS: Record<AdapterName, IAdapter> = {
   antigravity: new AntigravityAdapter(),
   copilot: new CopilotAdapter(),
   codex: new CodexAdapter(),
+  kilo: new KiloAdapter(),
+  cursor: new CursorAdapter(),
+  opencode: new OpenCodeAdapter(),
 }
 
 function loadTemplate(phase: string): string {
@@ -58,7 +70,7 @@ function loadTemplate(phase: string): string {
   return ''
 }
 
-async function buildPrompt(req: DelegateRequest): Promise<string> {
+async function buildPrompt(req: DelegateRequest, odooTaskType?: OdooTaskType): Promise<string> {
   const template = loadTemplate(`sdd-${req.phase}`)
 
   // Fetch contextIds from Engram
@@ -89,10 +101,48 @@ async function buildPrompt(req: DelegateRequest): Promise<string> {
     if (req.deliverable) prompt += `\n\nExpected deliverable: ${req.deliverable}`
   }
 
+  // Odoo context injection
+  try {
+    const odooCtx = await buildOdooContext(req.instruction)
+    if (odooCtx) {
+      prompt += `\n\n${formatOdooContextForPrompt(odooCtx)}`
+      if (odooTaskType) {
+        const knowledge = injectKnowledgeContext(odooTaskType)
+        if (knowledge) prompt += `\n\n${knowledge}`
+      }
+    }
+  } catch { /* non-Odoo project — skip silently */ }
+
   // Language detection: respond in the same language as the instruction
   prompt += `\n\n---\nDetect the language of the instruction above and respond entirely in that language. If the instruction is in Spanish, respond in Spanish. If in English, respond in English.`
 
   return prompt
+}
+
+async function triggerHumanFirstDoc(
+  output: string,
+  phase: string,
+  change: string | undefined,
+  taskType: OdooTaskType | undefined,
+): Promise<void> {
+  const docTemplate = loadTemplate(`docs/sdd-${phase}`)
+  if (!docTemplate) return
+
+  const prompt = docTemplate
+    .replace(/\{phase\}/g, phase)
+    .replace(/\{work_output\}/g, output.slice(0, 8000))
+    .replace(/\{task_type\}/g, taskType ?? 'general')
+    .replace(/\{change\}/g, change ?? 'unknown')
+
+  const adapter = ADAPTERS['antigravity']
+  const model = 'Gemini 3.5 Flash (Medium)'
+  const docContent = await adapter.execute(prompt, model, 'n/a')
+
+  // R-HF-5: save .md to docs/sdd/{change}/{phase}.md
+  const changeName = change ?? 'unknown'
+  const docsDir = join(PACKAGE_ROOT, 'docs', 'sdd', changeName)
+  mkdirSync(docsDir, { recursive: true })
+  writeFileSync(join(docsDir, `${phase}.md`), docContent, 'utf-8')
 }
 
 export async function handleDelegate(input: unknown): Promise<DelegateResult> {
@@ -111,6 +161,10 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
     return executeTask({ ...pending.request, complexity: pending.plan.complexity }, pending.plan)
   }
 
+  // --- Detect Odoo task type (if applicable) ---
+  const odooDetected = detectTaskType(req.instruction)
+  const odooTaskType = odooDetected?.type
+
   // --- Score complexity & select adapter ---
   const score = scoreComplexity(req)
   const selection = selectAdapter(
@@ -119,6 +173,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
     req.override ? undefined : undefined,
     req.override?.model,
     req.override?.effort,
+    odooTaskType,
   )
 
   // --- Two-phase commit: HIGH complexity gate ---
@@ -134,7 +189,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
       model: selection.model,
       effort: selection.effort,
       complexity: score.level,
-      prompt: await buildPrompt(req),
+      prompt: await buildPrompt(req, odooTaskType),
     }
     pendingTokens.set(confirmToken, { plan, expiresAt: Date.now() + TOKEN_TTL_MS, request: req })
 
@@ -155,13 +210,13 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
     model: selection.model,
     effort: selection.effort,
     complexity: score.level,
-    prompt: await buildPrompt(req),
+    prompt: await buildPrompt(req, odooTaskType),
   }
 
-  return executeTask(req, plan)
+  return executeTask(req, plan, odooTaskType)
 }
 
-async function executeTask(req: DelegateRequest, plan: PendingPlan): Promise<DelegateResult> {
+async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType?: OdooTaskType): Promise<DelegateResult> {
   // --- Circuit breaker + budget check with fallback ---
   let adapterName = plan.adapter
   if (!isAvailable(adapterName) || isOverBudget(adapterName)) {
@@ -239,6 +294,24 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan): Promise<Del
 
     recordSuccess(adapterName)
     completeTask(task.id, output, engramId)
+
+    // Auto-generate excalidraw diagram on design phase (fire-and-forget)
+    if (req.phase === 'design' && req.change) {
+      const diagramOutputPath = join(PACKAGE_ROOT, 'docs', 'sdd', req.change, 'design-arch')
+      generateDiagram({
+        template: 'sdd-architecture',
+        context: output.slice(0, 6000),
+        outputPath: diagramOutputPath,
+        changeName: req.change,
+      }).catch(err =>
+        console.warn('[diagram] skipped:', (err as Error).message)
+      )
+    }
+
+    // Human First documentation — fire-and-forget (non-blocking)
+    triggerHumanFirstDoc(output, req.phase, req.change, odooTaskType).catch(err =>
+      console.warn('[human-first] doc generation skipped:', (err as Error).message)
+    )
 
     // Return only a brief summary to keep Claude's context thin.
     // Full content is in Engram at engramId — fetch with mem_get_observation if needed.

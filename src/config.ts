@@ -13,6 +13,9 @@ const DEFAULT_CONFIG: IrisConfig = {
     antigravity:  { enabled: true, priority: 1, daily_budget_usd: 0.0 },
     copilot:      { enabled: true, priority: 2, daily_budget_usd: 0.0 },
     codex:        { enabled: true, priority: 2, daily_budget_usd: 2.0 },
+    kilo:         { enabled: true, priority: 2, daily_budget_usd: 0.0 },
+    cursor:       { enabled: true, priority: 2, daily_budget_usd: 0.0 },
+    opencode:     { enabled: true, priority: 2, daily_budget_usd: 0.0 },
   },
 }
 

@@ -1,0 +1,9 @@
+# iris local configuration — copy to iris.local.yaml and fill in your paths
+# iris.local.yaml is gitignored — never commit it
+#
+# alesco_path: absolute path to your Alesco Google Drive folder
+# iris derives: Source/odoo-enterprise-18, Source/odoo-community-18, Engram/
+#
+# Run `iris_setup` to auto-detect this value from your Google Drive installation.
+
+alesco_path: # example: G:\My Drive\[1] YourName\[4] Work\Alesco

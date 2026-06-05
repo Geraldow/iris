@@ -1,4 +1,6 @@
-import type { Phase, ComplexityLevel, AdapterName, AdapterSelection } from '../types/index.js'
+import type { Phase, ComplexityLevel, AdapterName, AdapterSelection, OdooTaskType } from '../types/index.js'
+import type { TaskConfig } from '../context/odoo-selector.js'
+import { TASK_CONFIG } from '../context/odoo-selector.js'
 
 const PHASE_ADAPTER: Record<Phase, AdapterName> = {
   explore:  'antigravity',  // Gemini: semantic search + Engram retrieval
@@ -52,6 +54,16 @@ const CODEX_EFFORTS: Record<ComplexityLevel, string> = {
   low: 'low', medium: 'high', high: 'high',
 }
 
+const KILO_MODELS: Record<ComplexityLevel, string> = {
+  low: 'claude-3-5-haiku', medium: 'claude-sonnet-4', high: 'claude-opus-4',
+}
+const CURSOR_MODELS: Record<ComplexityLevel, string> = {
+  low: 'claude-3-5-haiku', medium: 'claude-sonnet-4', high: 'claude-opus-4',
+}
+const OPENCODE_MODELS: Record<ComplexityLevel, string> = {
+  low: 'opencode/zen', medium: 'opencode/zen', high: 'opencode/zen',
+}
+
 function resolveModelAndEffort(adapter: AdapterName, complexity: ComplexityLevel): { model: string; effort: string } {
   switch (adapter) {
     case 'claude':
@@ -62,6 +74,12 @@ function resolveModelAndEffort(adapter: AdapterName, complexity: ComplexityLevel
       return { model: COPILOT_MODELS[complexity], effort: COPILOT_EFFORTS[complexity] }
     case 'codex':
       return { model: CODEX_MODELS[complexity], effort: CODEX_EFFORTS[complexity] }
+    case 'kilo':
+      return { model: KILO_MODELS[complexity], effort: 'n/a' }
+    case 'cursor':
+      return { model: CURSOR_MODELS[complexity], effort: 'n/a' }
+    case 'opencode':
+      return { model: OPENCODE_MODELS[complexity], effort: 'n/a' }
   }
 }
 
@@ -71,9 +89,20 @@ export function selectAdapter(
   forcedAdapter?: AdapterName,
   overrideModel?: string,
   overrideEffort?: string,
+  odooTaskType?: OdooTaskType,
 ): AdapterSelection {
-  const primary = forcedAdapter ?? PHASE_ADAPTER[phase]
-  const fallback = PHASE_FALLBACK[phase] ?? null
+  // Odoo task type overrides phase-based routing
+  let primary: AdapterName
+  let fallback: AdapterName | null
+
+  if (odooTaskType && TASK_CONFIG[odooTaskType]) {
+    const cfg: TaskConfig = TASK_CONFIG[odooTaskType]
+    primary = forcedAdapter ?? cfg.primaryAdapter
+    fallback = cfg.fallbackAdapter
+  } else {
+    primary = forcedAdapter ?? PHASE_ADAPTER[phase]
+    fallback = PHASE_FALLBACK[phase] ?? null
+  }
 
   const { model, effort } = resolveModelAndEffort(primary, complexity)
 
