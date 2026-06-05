@@ -1,4 +1,4 @@
-import type { OdooTaskType } from './odoo-selector.js'
+import type { OdooTaskType } from '../types/index.js'
 import { TASK_CONFIG } from './odoo-selector.js'
 
 const BASE = `You are agy, operating as an iris sub-agent. Complete the delegated task below.
