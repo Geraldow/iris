@@ -121,6 +121,30 @@ Iris introduces several core components to separate responsibilities and improve
 
 ---
 
+## 8b. Odoo Integration Layer
+
+Iris includes a specialized Odoo development layer for Alesco Perú. It detects 22 OdooTaskType values through 130+ keyword matching in `context/odoo-selector.ts`. Each task type has a dedicated `TASK_CONFIG` entry specifying: primary adapter, fallback adapter, relevant knowledge files from `knowledge/odoo/`, and active RULES.md governance rules (R1–R13).
+
+OdooContext is built by querying CodeGraph for `__manifest__.py`, extracting version/edition, and resolving alesco_path (enterprise and community source paths). This context is injected into the adapter prompt so the AI always knows the Odoo version, edition, branch, and which rules apply.
+
+**Enterprise First (R6):** `executor/enterprise.ts` searches the Enterprise source via `rg` before any implementation. **Branch Safety (R2):** `executor/git.ts` blocks `push --force`, `rebase`, `reset`, and requires explicit authorization for push/merge/cherry-pick.
+
+---
+
+## 8c. Knowledge Base
+
+Iris ships 200+ Odoo knowledge files organized under `knowledge/odoo/`:
+- `ai/` — RULES.md (R1–R13) + patterns (xml-views, security, wizards, controllers, OWL, mail, portal, etc.) + core (ORM, data-migration, performance) + testing + migration (v14–v19) + business (accounting, stock, HR, sales) + v18/v19 references
+- `contribute/` — plugins (odoo-oca, odoo-ops, odoo-commit, odoo-pr, odoo-ci, odoo-changelog) + scripts
+
+---
+
+## 8d. Excalidraw Diagram Generation
+
+`src/diagrams/generator.ts` auto-generates `.excalidraw` files on every `design` phase (fire-and-forget). It loads `knowledge/excalidraw/SKILL.md` (verbatim from coleam00/excalidraw-diagram-skill), the appropriate template, and the Alesco brand palette (navy `#1E3A5F`, orange `#E8732A`, Odoo purple `#875A7B`). Templates: `odoo-erd`, `odoo-owl-flow`, `sdd-architecture`, `odoo-deployment`. Output: `docs/sdd/{change}/design-arch.excalidraw`.
+
+---
+
 ## 9. Shared Memory Architecture
 To achieve zero context fragmentation and zero cold starts across sessions, Iris utilizes a **Shared Memory Architecture**:
 - All 7 CLI adapters are configured with native tools/configurations to communicate directly with MCP servers.
