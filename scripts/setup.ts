@@ -5,7 +5,8 @@
  */
 
 import { execSync, spawnSync } from 'child_process'
-import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
+import { existsSync, writeFileSync, readFileSync, readdirSync, copyFileSync, mkdirSync } from 'fs'
+import { homedir } from 'os'
 import { join, basename } from 'path'
 
 function detectPackageRoot(): string {
@@ -181,7 +182,7 @@ async function main() {
   console.log(`${BOLD}${CYAN}iris Setup — Alesco AI Ecosystem${RESET}`)
   console.log('─'.repeat(50))
 
-  const TOTAL = 9
+  const TOTAL = 10
 
   // ─── Step 0: npm install ─────────────────────────────
   step(0, TOTAL, 'Verificando dependencias Node...')
@@ -382,6 +383,29 @@ async function main() {
         }
       }
     } catch { /* GitHub API no disponible */ }
+  }
+
+  // ─── Step 8: Install CLAUDE.md ──────────────────────
+  step(9, TOTAL, 'Instalando CLAUDE.md en ~/.claude/...')
+
+  const claudeDir = join(process.env['USERPROFILE'] ?? homedir(), '.claude')
+  const claudeMdPath = join(claudeDir, 'CLAUDE.md')
+  const claudeTemplatePath = join(PACKAGE_ROOT, 'iris', 'prompts', 'CLAUDE.md')
+
+  if (!existsSync(claudeTemplatePath)) {
+    warn('Template CLAUDE.md no encontrado en iris/prompts/ — saltando')
+  } else if (existsSync(claudeMdPath)) {
+    warn('~/.claude/CLAUDE.md ya existe')
+    if (prompt('¿Sobreescribir con la versión del template de iris?', false)) {
+      copyFileSync(claudeTemplatePath, claudeMdPath)
+      ok(`CLAUDE.md actualizado → ${claudeMdPath}`)
+    } else {
+      info('CLAUDE.md existente conservado — sin cambios')
+    }
+  } else {
+    mkdirSync(claudeDir, { recursive: true })
+    copyFileSync(claudeTemplatePath, claudeMdPath)
+    ok(`CLAUDE.md instalado → ${claudeMdPath}`)
   }
 
   // ─── Complete ────────────────────────────────────────
