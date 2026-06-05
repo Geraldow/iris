@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { registerTools } from './server.js'
 import { closeDb } from './store/db.js'
 import { closeEngramClient } from './engram/client.js'
+import { closeCodeGraphClient } from './codegraph/client.js'
 
 const server = new McpServer({
   name: 'iris',
@@ -15,12 +16,14 @@ const transport = new StdioServerTransport()
 
 process.on('SIGINT', async () => {
   await closeEngramClient()
+  await closeCodeGraphClient()
   closeDb()
   process.exit(0)
 })
 
 process.on('SIGTERM', async () => {
   await closeEngramClient()
+  await closeCodeGraphClient()
   closeDb()
   process.exit(0)
 })

@@ -6,3 +6,6 @@ db/
 .env.*
 *.log
 .codegraph/
+iris.local.yaml
+docs/sdd/
+iris-setup.exe

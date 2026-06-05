@@ -60,7 +60,7 @@ jobs:
           MISSING=0
           PHASES="explore propose spec design tasks apply verify report document"
           for phase in $PHASES; do
-            file="iris/prompts/sdd-${phase}.md"
+            file="prompts/sdd-${phase}.md"
             if [ -f "$file" ]; then
               echo "  ✅ sdd-${phase}.md"
             else
