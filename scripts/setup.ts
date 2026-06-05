@@ -309,6 +309,17 @@ async function main() {
   console.log('─'.repeat(50))
   console.log(`${BOLD}${GREEN}✅ Setup completo. Reinicia Claude Code.${RESET}`)
   console.log()
+
+  // Keep window open so user can read results
+  process.stdout.write('  Presiona Enter para cerrar...')
+  await new Promise<void>(resolve => {
+    process.stdin.setRawMode?.(true)
+    process.stdin.resume()
+    process.stdin.once('data', () => {
+      process.stdin.pause()
+      resolve()
+    })
+  })
 }
 
 main().catch(err => {
