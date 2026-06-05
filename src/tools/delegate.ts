@@ -296,11 +296,9 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
     recordSuccess(adapterName)
     completeTask(task.id, output, engramId)
 
-    // Write output to file if outputPath specified (iris owns the write lifecycle, not the adapter)
-    if (req.outputPath) {
-      mkdirSync(dirname(req.outputPath), { recursive: true })
-      writeFileSync(req.outputPath, output, 'utf-8')
-    }
+    // outputPath is passed to the adapter via the prompt template — the adapter writes
+    // the file directly with its own tools (Write/Edit). iris does NOT overwrite here
+    // because the adapter's stdout is a conversational summary, not the file content.
 
     // Auto-generate excalidraw diagram on design phase (fire-and-forget)
     if (req.phase === 'design' && req.change) {

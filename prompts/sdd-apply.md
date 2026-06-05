@@ -23,4 +23,7 @@ You are implementing code as part of a Spec-Driven Development workflow.
 4. Every new model MUST have ir.model.access.csv (R4)
 5. Mark task complete when done
 
-Respond with the implementation, then a brief summary of what was created/modified.
+## IMPORTANT — File Writing
+When an Output Path is specified above, write the file using your own tools (Write/Edit tool).
+Do NOT include the file contents in your stdout response.
+Return only a brief summary of what was created or modified.
