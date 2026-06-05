@@ -5,7 +5,7 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-22d3ee?style=flat-square)
 ![Node 22+](https://img.shields.io/badge/node-22%2B-22d3ee?style=flat-square)
 ![MCP Server](https://img.shields.io/badge/mcp--server-iris-a855f7?style=flat-square)
-![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-22d3ee?style=flat-square)
+![Version 1.1.6](https://img.shields.io/badge/version-1.1.6-22d3ee?style=flat-square)
 
 **One router. Every agent. Full control.**
 
@@ -61,6 +61,9 @@ Iris normalizes CLI commands for each underlying agent executor. The router dele
 | **Claude Code (claude)** | `claude -p "{prompt}" --model {model} --effort {effort}` | Deep multi-file reasoning, specification drafting, and interactive code generation. |
 | **Copilot (gh copilot)** | `gh copilot -p "{prompt}" --reasoning-effort {effort}` | Quick code queries, short inline changes, and fast diagnostics. |
 | **Codex (codex)** | `codex exec -m {model} -c reasoning_effort="{effort}" "{prompt}"` | Batch code generation, scripted task automation, and direct file writes. |
+| **Kilo (kilocode)** | `kilocode --model {model} "{prompt}"` | Lightweight targeted code edits and file changes. |
+| **Cursor** | `cursor agent --model {model} "{prompt}"` | IDE-integrated code changes and refactoring. |
+| **OpenCode** | `opencode run --model {model} "{prompt}"` | Open-source Zen model execution (no OpenRouter auth required). |
 
 ---
 
@@ -160,6 +163,9 @@ npm install
 
 # 3. Build the server
 npm run build
+
+# 4. Install Claude Code behavioral protocols
+Copy-Item iris\prompts\CLAUDE.md -Destination "$env:USERPROFILE\.claude\CLAUDE.md"
 ```
 
 ### First Run
@@ -167,11 +173,12 @@ npm run build
 Initialize and verify the Iris operational state:
 
 ```powershell
-# Run the setup tool to verify paths, trust folders, and sync databases
-npm run iris_setup
+# Run the setup script to verify paths and install dependencies
+node scripts/setup.ts
 
-# Check the initial status and availability of all adapters
-npm run iris_status
+# Register iris as an MCP server in Claude Code settings
+# Add to ~/.claude/claude_desktop_config.json:
+# { "mcpServers": { "iris": { "command": "node", "args": ["dist/index.js"] } } }
 ```
 
 ---
