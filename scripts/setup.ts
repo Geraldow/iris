@@ -138,7 +138,6 @@ const TOOLS: Tool[] = [
   { name: 'opencode',   cmd: 'opencode --version',   npm: 'opencode' },
   { name: 'codex',      cmd: 'codex --version',      npm: '@openai/codex' },
   { name: 'cursor',     cmd: 'cursor --version',     note: 'https://cursor.sh' },
-  { name: 'kiro',       cmd: 'kiro --version',       note: 'https://kiro.dev' },
 ]
 
 async function main() {
