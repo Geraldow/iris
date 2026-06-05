@@ -90,6 +90,42 @@ function findAlescoFolder(root: string, depth = 4): string | null {
   return null
 }
 
+// ─── Engram installer (gh release download) ───────────────────────────────────
+async function installEngram(): Promise<void> {
+  const tmpDir = process.env.TEMP ?? 'C:\\Temp'
+  const zipPath = join(tmpDir, 'engram-windows.zip')
+  const installDir = join(process.env.LOCALAPPDATA ?? join(process.env.USERPROFILE ?? 'C:\\Users\\Public', 'AppData', 'Local'), 'Programs', 'engram')
+
+  info('Descargando Engram desde GitHub releases...')
+  try {
+    spawnSync('gh', [
+      'release', 'download',
+      '--repo', 'Gentleman-Programming/engram',
+      '--pattern', '*Windows_x86_64.zip',
+      '--output', zipPath,
+      '--clobber',
+    ], { stdio: 'inherit', timeout: 60000 })
+
+    info('Instalando Engram...')
+    spawnSync('powershell', [
+      '-Command',
+      `Expand-Archive -Path '${zipPath}' -DestinationPath '${installDir}' -Force`,
+    ], { stdio: 'inherit', timeout: 30000 })
+
+    // Add to user PATH permanently
+    spawnSync('powershell', [
+      '-Command',
+      `$p = [Environment]::GetEnvironmentVariable('PATH','User'); if ($p -notlike '*engram*') { [Environment]::SetEnvironmentVariable('PATH', "$p;${installDir}", 'User') }`,
+    ], { stdio: 'inherit', timeout: 10000 })
+
+    ok(`Engram instalado → ${installDir}`)
+    warn('Reinicia la terminal para que Engram esté en PATH')
+  } catch (err) {
+    warn(`No se pudo instalar Engram automáticamente: ${(err as Error).message}`)
+    info('Descarga manual: https://github.com/Gentleman-Programming/engram/releases/latest')
+  }
+}
+
 // ─── Inline: CodeGraph init (replaces init-codegraph.ps1) ─────────────────────
 function initCodeGraph(): void {
   const searchRoot = 'C:\\Development\\Odoo\\18'
@@ -131,13 +167,13 @@ const TOOLS: Tool[] = [
   { name: 'Bun',        cmd: 'bun --version',        npm: 'bun' },
   { name: 'Claude Code',cmd: 'claude --version',     npm: '@anthropic-ai/claude-code' },
   { name: 'gh',         cmd: 'gh --version',         winget: 'GitHub.cli' },
-  { name: 'Engram',     cmd: 'engram --version',     note: 'github.com/Geraldow/engram/releases' },
   { name: 'CodeGraph',  cmd: 'codegraph --version',  npm: '@codegraph/cli' },
-  { name: 'agy',        cmd: 'agy --version',        note: 'Antigravity releases' },
-  { name: 'kilo',       cmd: 'kilocode --version',   note: 'Kilo releases' },
+  { name: 'agy',        cmd: 'agy --version',        winget: 'Google.AntigravityCLI' },
+  { name: 'kilo',       cmd: 'kilocode --version',   npm: '@kilocode/cli' },
   { name: 'opencode',   cmd: 'opencode --version',   npm: 'opencode' },
   { name: 'codex',      cmd: 'codex --version',      npm: '@openai/codex' },
-  { name: 'cursor',     cmd: 'cursor --version',     note: 'https://cursor.sh' },
+  { name: 'cursor',     cmd: 'cursor --version',     winget: 'Anysphere.Cursor' },
+  { name: 'Engram',     cmd: 'engram --version',     note: '__engram_download__' },
 ]
 
 async function main() {
@@ -187,6 +223,15 @@ async function main() {
 
   // Auto-install missing tools with winget/npm
   for (const tool of missing) {
+    if (tool.note === '__engram_download__') {
+      warn('Engram → no encontrado')
+      if (prompt('¿Instalar Engram automáticamente?')) {
+        await installEngram()
+      } else {
+        info('Descarga manual: https://github.com/Gentleman-Programming/engram/releases/latest')
+      }
+      continue
+    }
     if (tool.winget) {
       warn(`Instalar: winget install ${tool.winget}`)
       if (prompt(`¿Instalar ${tool.name} ahora?`)) {
