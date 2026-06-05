@@ -18,6 +18,7 @@ import { KiloAdapter } from '../adapters/kilo.js'
 import { CursorAdapter } from '../adapters/cursor.js'
 import { OpenCodeAdapter } from '../adapters/opencode.js'
 import { homedir } from 'os'
+import { buildTaskPreamble } from '../context/slim-md.js'
 import { runSubprocess } from '../executor/subprocess.js'
 import { runInTerminal } from '../executor/terminal.js'
 import { saveTaskPrompt } from '../engram/sync.js'
@@ -116,7 +117,7 @@ async function buildPrompt(req: DelegateRequest, odooTaskType?: OdooTaskType): P
   // Language detection: respond in the same language as the instruction
   prompt += `\n\n---\nDetect the language of the instruction above and respond entirely in that language. If the instruction is in Spanish, respond in Spanish. If in English, respond in English.`
 
-  return prompt
+  return buildTaskPreamble(req.phase, odooTaskType) + '\n\n' + prompt
 }
 
 async function triggerHumanFirstDoc(
@@ -294,6 +295,12 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
 
     recordSuccess(adapterName)
     completeTask(task.id, output, engramId)
+
+    // Write output to file if outputPath specified (iris owns the write lifecycle, not the adapter)
+    if (req.outputPath) {
+      mkdirSync(dirname(req.outputPath), { recursive: true })
+      writeFileSync(req.outputPath, output, 'utf-8')
+    }
 
     // Auto-generate excalidraw diagram on design phase (fire-and-forget)
     if (req.phase === 'design' && req.change) {
