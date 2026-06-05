@@ -5,11 +5,12 @@
  */
 
 import { execSync, spawnSync } from 'child_process'
-import { existsSync, writeFileSync, readFileSync } from 'fs'
-import { join, dirname } from 'path'
+import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
+import { join, dirname, basename } from 'path'
 
 const PACKAGE_ROOT = join(import.meta.dir, '..')
 const LOCAL_YAML = join(PACKAGE_ROOT, 'iris.local.yaml')
+const DIST_ENTRY = join(PACKAGE_ROOT, 'dist', 'index.js')
 const CLAUDE_CONFIG = join(process.env.USERPROFILE ?? process.env.HOME ?? '', '.claude', 'claude_desktop_config.json')
 
 const RESET = '\x1b[0m'
@@ -39,47 +40,168 @@ function prompt(question: string, defaultY = true): boolean {
   const def = defaultY ? '[Y/n]' : '[y/N]'
   process.stdout.write(`     ${question} ${def} `)
   const buf = Buffer.alloc(1024)
-  const n = require('fs').readSync(0, buf, 0, 1024, null)  // blocking stdin read
+  const n = require('fs').readSync(0, buf, 0, 1024, null)
   const answer = buf.subarray(0, n).toString().trim().toLowerCase()
   if (answer === '') return defaultY
   return answer === 'y' || answer === 'yes' || answer === 'sí' || answer === 'si'
 }
+
+// ─── Inline: Google Drive detection (replaces detect-alesco-path.ps1) ─────────
+function detectGoogleDrivePath(): string | null {
+  const regKeys = [
+    'HKCU\\Software\\Google\\DriveFS\\Share',
+    'HKCU\\Software\\Google\\Drive',
+    'HKLM\\Software\\Google\\DriveFS',
+  ]
+  for (const key of regKeys) {
+    try {
+      const out = execSync(`reg query "${key}" 2>nul`, { encoding: 'utf-8', timeout: 5000 })
+      const m = out.match(/(?:MountPoint|FSMountPoint|InstallLocation)\s+REG_SZ\s+(.+)/)
+      const mp = m?.[1]?.trim()
+      if (mp && existsSync(mp)) return mp
+    } catch { /* key not found */ }
+  }
+  return null
+}
+
+function findAlescoFolder(root: string, depth = 4): string | null {
+  if (depth === 0) return null
+  try {
+    const entries = readdirSync(root, { withFileTypes: true })
+    for (const e of entries) {
+      if (!e.isDirectory()) continue
+      if (e.name === 'Alesco') return join(root, e.name)
+      const found = findAlescoFolder(join(root, e.name), depth - 1)
+      if (found) return found
+    }
+  } catch { /* permission error — skip */ }
+  return null
+}
+
+// ─── Inline: CodeGraph init (replaces init-codegraph.ps1) ─────────────────────
+function initCodeGraph(): void {
+  const searchRoot = 'C:\\Development\\Odoo\\18'
+  if (!existsSync(searchRoot)) {
+    warn('Directorio Odoo no encontrado — saltando CodeGraph init')
+    return
+  }
+  let dirs: string[] = []
+  try {
+    dirs = readdirSync(searchRoot, { withFileTypes: true })
+      .filter(d => d.isDirectory() && existsSync(join(searchRoot, d.name, '__manifest__.py')))
+      .map(d => join(searchRoot, d.name))
+  } catch { return }
+
+  if (dirs.length === 0) {
+    info('No se encontraron proyectos Odoo en ' + searchRoot)
+    return
+  }
+
+  for (const project of dirs) {
+    const name = basename(project)
+    if (existsSync(join(project, '.codegraph'))) {
+      ok(`${name} (CodeGraph ✓)`)
+      continue
+    }
+    warn(`${name} — sin índice CodeGraph`)
+    if (prompt(`¿Indexar ${name}?`)) {
+      info(`Indexando ${name}...`)
+      spawnSync('codegraph', ['init', '-i'], { cwd: project, stdio: 'inherit', timeout: 120000 })
+    }
+  }
+}
+
+// ─── Tool list ─────────────────────────────────────────────────────────────────
+interface Tool { name: string; cmd: string; winget?: string; npm?: string; note?: string }
+
+const TOOLS: Tool[] = [
+  { name: 'Node.js',    cmd: 'node --version',      winget: 'OpenJS.NodeJS.LTS' },
+  { name: 'Bun',        cmd: 'bun --version',        npm: 'bun' },
+  { name: 'Claude Code',cmd: 'claude --version',     npm: '@anthropic-ai/claude-code' },
+  { name: 'gh',         cmd: 'gh --version',         winget: 'GitHub.cli' },
+  { name: 'Engram',     cmd: 'engram --version',     note: 'github.com/Geraldow/engram/releases' },
+  { name: 'CodeGraph',  cmd: 'codegraph --version',  npm: '@codegraph/cli' },
+  { name: 'agy',        cmd: 'agy --version',        note: 'Antigravity releases' },
+  { name: 'kilo',       cmd: 'kilocode --version',   note: 'Kilo releases' },
+  { name: 'opencode',   cmd: 'opencode --version',   npm: 'opencode' },
+  { name: 'codex',      cmd: 'codex --version',      npm: '@openai/codex' },
+  { name: 'cursor',     cmd: 'cursor --version',     note: 'https://cursor.sh' },
+  { name: 'kiro',       cmd: 'kiro --version',       note: 'https://kiro.dev' },
+]
 
 async function main() {
   console.log()
   console.log(`${BOLD}${CYAN}iris Setup — Alesco AI Ecosystem${RESET}`)
   console.log('─'.repeat(50))
 
-  const TOTAL = 7
+  const TOTAL = 9
+
+  // ─── Step 0: npm install ─────────────────────────────
+  step(0, TOTAL, 'Verificando dependencias Node...')
+  if (!existsSync(join(PACKAGE_ROOT, 'node_modules'))) {
+    info('node_modules/ no encontrado — instalando dependencias...')
+    spawnSync('npm', ['install'], { cwd: PACKAGE_ROOT, stdio: 'inherit', timeout: 300000 })
+    ok('npm install completado')
+  } else {
+    ok('node_modules/ presente')
+  }
+
+  // ─── Step 0b: Build dist ─────────────────────────────
+  step(1, TOTAL, 'Verificando build TypeScript...')
+  if (!existsSync(DIST_ENTRY)) {
+    info('dist/index.js no existe — compilando TypeScript...')
+    const result = spawnSync('npx', ['tsc'], { cwd: PACKAGE_ROOT, stdio: 'inherit', timeout: 120000 })
+    if (result.status === 0) {
+      ok('TypeScript compilado → dist/index.js')
+    } else {
+      warn('Error al compilar TypeScript — revise los errores arriba')
+    }
+  } else {
+    ok('dist/index.js presente')
+  }
 
   // ─── Step 1: Tool verification ───────────────────────
-  step(1, TOTAL, 'Verificando herramientas CLI...')
+  step(2, TOTAL, 'Verificando herramientas CLI...')
 
-  const tools = [
-    { name: 'Node.js',    cmd: 'node --version',       install: 'winget install OpenJS.NodeJS.LTS' },
-    { name: 'Claude Code',cmd: 'claude --version',      install: 'npm install -g @anthropic-ai/claude-code' },
-    { name: 'Engram',     cmd: 'engram --version',      install: 'See: github.com/Geraldow/engram/releases' },
-    { name: 'CodeGraph',  cmd: 'codegraph --version',   install: 'npm install -g @codegraph/cli' },
-    { name: 'agy',        cmd: 'agy --version',         install: 'See: Antigravity releases' },
-    { name: 'kilo',       cmd: 'kilocode --version',    install: 'See: Kilo releases' },
-    { name: 'opencode',   cmd: 'opencode --version',    install: 'npm install -g opencode' },
-    { name: 'gh',         cmd: 'gh --version',          install: 'winget install GitHub.cli' },
-  ]
-
-  for (const tool of tools) {
+  const missing: Tool[] = []
+  for (const tool of TOOLS) {
     const version = check(tool.cmd)
     if (version) {
-      ok(`${tool.name} ${version}`)
+      ok(`${tool.name}: ${version}`)
     } else {
       fail(`${tool.name} → no encontrado`)
-      warn(`  Instalar: ${tool.install}`)
+      missing.push(tool)
+    }
+  }
+
+  // Auto-install missing tools with winget/npm
+  for (const tool of missing) {
+    if (tool.winget) {
+      warn(`Instalar: winget install ${tool.winget}`)
+      if (prompt(`¿Instalar ${tool.name} ahora?`)) {
+        info(`Instalando ${tool.name}...`)
+        try {
+          execSync(`winget install ${tool.winget} --silent --accept-package-agreements --accept-source-agreements`, { stdio: 'inherit', timeout: 120000 } as any)
+          ok(`${tool.name} instalado`)
+        } catch { warn(`No se pudo instalar ${tool.name} — intente manualmente`) }
+      }
+    } else if (tool.npm) {
+      warn(`Instalar: npm install -g ${tool.npm}`)
+      if (prompt(`¿Instalar ${tool.name} ahora?`)) {
+        info(`Instalando ${tool.name}...`)
+        try {
+          execSync(`npm install -g ${tool.npm}`, { stdio: 'inherit', timeout: 120000 } as any)
+          ok(`${tool.name} instalado`)
+        } catch { warn(`No se pudo instalar ${tool.name} — intente manualmente`) }
+      }
+    } else if (tool.note) {
+      warn(`Descarga manual: ${tool.note}`)
     }
   }
 
   // ─── Step 2: Google Drive detection ──────────────────
-  step(2, TOTAL, 'Detectando Google Drive...')
+  step(3, TOTAL, 'Detectando Google Drive...')
 
-  const detectScript = join(PACKAGE_ROOT, 'scripts', 'detect-alesco-path.ps1')
   let alescoPath: string | null = null
 
   if (existsSync(LOCAL_YAML)) {
@@ -93,48 +215,54 @@ async function main() {
     }
   }
 
-  if (!alescoPath && existsSync(detectScript)) {
-    info('Buscando carpeta Alesco en Google Drive...')
-    const result = spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', detectScript], {
-      encoding: 'utf-8', timeout: 20000,
-    })
-    alescoPath = result.stdout?.trim() ?? null
-    if (alescoPath && existsSync(alescoPath)) {
+  if (!alescoPath) {
+    info('Buscando Google Drive via registry...')
+    const gdrivePath = detectGoogleDrivePath()
+    if (gdrivePath) {
+      ok(`Google Drive: ${gdrivePath}`)
+      info('Buscando carpeta Alesco...')
+      alescoPath = findAlescoFolder(gdrivePath, 5)
+    }
+
+    if (!alescoPath) {
+      info('Buscando Alesco en todas las unidades...')
+      try {
+        const drives = execSync('wmic logicaldisk get name', { encoding: 'utf-8', timeout: 5000 })
+          .split('\n').map(l => l.trim()).filter(l => /^[A-Z]:$/.test(l))
+        for (const drive of drives) {
+          alescoPath = findAlescoFolder(drive + '\\', 4)
+          if (alescoPath) break
+        }
+      } catch { /* wmic not available */ }
+    }
+
+    if (alescoPath) {
       ok(`Carpeta Alesco encontrada: ${alescoPath}`)
     } else {
-      warn('No se encontró carpeta Alesco en Google Drive')
-      alescoPath = null
+      warn('No se encontró carpeta Alesco — configure iris.local.yaml manualmente')
     }
   }
 
   // ─── Step 3: Configure alesco_path ───────────────────
-  step(3, TOTAL, 'Configurando alesco_path (iris.local.yaml)...')
+  step(4, TOTAL, 'Configurando iris.local.yaml...')
 
   if (alescoPath) {
     const enterprise = join(alescoPath, 'Source', 'odoo-enterprise-18')
     const community = join(alescoPath, 'Source', 'odoo-community-18')
     writeFileSync(LOCAL_YAML, `alesco_path: ${alescoPath}\n`)
     ok(`alesco_path: ${alescoPath}`)
-    existsSync(enterprise) ? ok(`enterprise: ${enterprise}`) : warn(`enterprise: no encontrado (${enterprise})`)
-    existsSync(community)  ? ok(`community:  ${community}`)  : warn(`community:  no encontrado (${community})`)
+    existsSync(enterprise) ? ok(`enterprise: ${enterprise}`) : warn(`enterprise: no encontrado`)
+    existsSync(community)  ? ok(`community:  ${community}`)  : warn(`community:  no encontrado`)
   } else {
-    warn('alesco_path no configurado — ejecuta: iris_setup para configurarlo manualmente')
+    warn('alesco_path no configurado — edite iris.local.yaml manualmente')
   }
 
   // ─── Step 4: CodeGraph initialization ────────────────
-  step(4, TOTAL, 'Inicializando CodeGraph...')
-
-  const initScript = join(PACKAGE_ROOT, 'scripts', 'init-codegraph.ps1')
-  if (existsSync(initScript)) {
-    spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', initScript], {
-      stdio: 'inherit', timeout: 120000,
-    })
-  } else {
-    warn('init-codegraph.ps1 no encontrado — salteando')
-  }
+  step(5, TOTAL, 'Inicializando CodeGraph...')
+  initCodeGraph()
 
   // ─── Step 5: Engram configuration ────────────────────
-  step(5, TOTAL, 'Verificando Engram...')
+  step(6, TOTAL, 'Verificando Engram...')
 
   const engramOk = check('engram --version')
   if (engramOk) {
@@ -148,30 +276,33 @@ async function main() {
   }
 
   // ─── Step 6: Register MCPs ───────────────────────────
-  step(6, TOTAL, 'Registrando MCPs en Claude Code...')
+  step(7, TOTAL, 'Registrando MCPs en Claude Code...')
 
-  try {
-    let config: any = {}
-    if (existsSync(CLAUDE_CONFIG)) {
-      config = JSON.parse(readFileSync(CLAUDE_CONFIG, 'utf-8'))
+  if (!existsSync(DIST_ENTRY)) {
+    warn('dist/index.js no existe — MCP iris NO registrado')
+    warn('Corra: npx tsc en el directorio del proyecto')
+  } else {
+    try {
+      let config: any = {}
+      if (existsSync(CLAUDE_CONFIG)) {
+        config = JSON.parse(readFileSync(CLAUDE_CONFIG, 'utf-8'))
+      }
+      config.mcpServers = config.mcpServers ?? {}
+      config.mcpServers['iris'] = { command: 'node', args: [DIST_ENTRY] }
+      writeFileSync(CLAUDE_CONFIG, JSON.stringify(config, null, 2))
+      ok(`iris MCP registrado → ${DIST_ENTRY}`)
+      ok(`Config: ${CLAUDE_CONFIG}`)
+    } catch (err) {
+      warn(`No se pudo actualizar claude_desktop_config.json: ${(err as Error).message}`)
     }
-    config.mcpServers = config.mcpServers ?? {}
-
-    const irisEntry = { command: 'node', args: [join(PACKAGE_ROOT, 'dist', 'index.js')] }
-    config.mcpServers['iris'] = irisEntry
-    ok('iris MCP registrado')
-
-    writeFileSync(CLAUDE_CONFIG, JSON.stringify(config, null, 2))
-    ok(`Config guardada: ${CLAUDE_CONFIG}`)
-  } catch (err) {
-    warn(`No se pudo actualizar claude_desktop_config.json: ${(err as Error).message}`)
   }
 
   // ─── Step 7: Connection check ─────────────────────────
-  step(7, TOTAL, 'Verificando conexiones...')
+  step(8, TOTAL, 'Verificando conexiones...')
 
-  check('engram --version') ? ok('Engram MCP → OK') : warn('Engram MCP → no disponible')
+  check('engram --version')    ? ok('Engram MCP → OK')    : warn('Engram MCP → no disponible')
   check('codegraph --version') ? ok('CodeGraph MCP → OK') : warn('CodeGraph MCP → no disponible')
+  existsSync(DIST_ENTRY)       ? ok('iris dist → OK')      : warn('iris dist → no compilado')
 
   // ─── Complete ────────────────────────────────────────
   console.log()
