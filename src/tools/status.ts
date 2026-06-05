@@ -2,6 +2,7 @@ import { getAllBudgets } from '../store/budgets.js'
 import { getAllStatuses } from '../router/circuit-breaker.js'
 import { getConfig } from '../config.js'
 import type { AdapterName } from '../types/index.js'
+import { checkForUpdates } from '../updater.js'
 
 export async function handleStatus(_input: unknown): Promise<object> {
   const config = getConfig()
@@ -15,9 +16,17 @@ export async function handleStatus(_input: unknown): Promise<object> {
     budget: budgets.find(b => b.adapter === name),
   }))
 
+  const update = await checkForUpdates()
+
   return {
     confirm_threshold: config.confirm_threshold,
     adapters,
+    version: update.current,
+    update_available: update.available,
+    ...(update.available && {
+      latest_version: update.latest,
+      update_url: update.url,
+    }),
   }
 }
 

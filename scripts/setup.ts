@@ -316,6 +316,30 @@ async function main() {
   check('codegraph --version') ? ok('CodeGraph MCP → OK') : warn('CodeGraph MCP → no disponible')
   existsSync(DIST_ENTRY)       ? ok('iris dist → OK')      : warn('iris dist → no compilado')
 
+  // Check for iris updates
+  if (existsSync(join(PACKAGE_ROOT, 'package.json'))) {
+    try {
+      const current = (JSON.parse(readFileSync(join(PACKAGE_ROOT, 'package.json'), 'utf-8')).version ?? '0.0.0') as string
+      const res = await fetch('https://api.github.com/repos/Geraldow/iris/releases/latest', {
+        headers: { 'User-Agent': 'iris-setup' },
+        signal: AbortSignal.timeout(5000),
+      })
+      if (res.ok) {
+        const data = await res.json() as { tag_name: string; html_url: string }
+        const latest = data.tag_name.replace(/^v/, '')
+        const pa = current.split('.').map(Number)
+        const pb = latest.split('.').map(Number)
+        const newer = pb.some((n, i) => n > (pa[i] ?? 0))
+        if (newer) {
+          warn(`iris ${current} → nueva versión disponible: v${latest}`)
+          info(`Descarga el nuevo installer: ${data.html_url}`)
+        } else {
+          ok(`iris ${current} — versión más reciente`)
+        }
+      }
+    } catch { /* GitHub API no disponible */ }
+  }
+
   // ─── Complete ────────────────────────────────────────
   console.log()
   console.log('─'.repeat(50))
