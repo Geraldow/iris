@@ -72,7 +72,7 @@ Iris normalizes CLI commands for each underlying agent executor. The router dele
 The following diagram illustrates how Iris acts as a central hub between the developer's agent session, the local database, the complexity-aware routing layer, and the underlying AI adapters communicating via Engram:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#0d1117', 'primaryTextColor': '#e6edf3', 'primaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'secondaryColor': '#161b22', 'tertiaryColor': '#1e1e2e'}}}%%
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
 flowchart TB
     user(["👤 User / Developer"])
     mcp["🔌 Iris MCP Server"]
@@ -230,6 +230,28 @@ iris_delegate --phase spec --instruction "Write delta specs for the invoice appr
 # 3. Apply Phase (batch implementation)
 iris_delegate --phase apply --instruction "Implement SQLite migrations and schema loader in src/store/db.ts" --change db-foundation --deliverable "db.ts"
 ```
+
+---
+
+## Documentation Ecosystem
+
+Iris ships with a comprehensive set of documentation that defines the entire ecosystem. All documents are in the project root:
+
+| Document | Purpose |
+|----------|---------|
+| `ECOSYSTEM.md` | Master document — architecture, 13 engineering disciplines, SDD pipeline, skills, harness, costs, roadmap |
+| `ARCHITECTURE.md` | Technical architecture — components, ADRs, data flow, interfaces, scalability |
+| `AGENTS.md` | Odoo specialist agents — 7 roles (Architect, Modeler, Viewer, Tester, Reviewer, Ops, Observable) with Onion Model |
+| `CONNECTIVITY.md` | Connectivity matrix — protocols, ports, dependencies, failure modes, security zones |
+| `RECIPROCAL_APPRENTICESHIP.md` | Reciprocal Apprenticeship methodology — 4 pillars, Learning Artifacts, progression layers |
+| `SECURITY.md` | Security — 7-layer model, SSH/Token policies, audit trails, SDD security checklist |
+| `RELIABILITY.md` | Reliability — backups, disaster recovery, resilience patterns, circuit breaker, runbooks, SLOs |
+| `QUALITY_SCORE.md` | Quality system — 10 dimensions (D1-D10), weighted scoring, thresholds, PR Gates |
+| `PLANS.md` | Implementation plan — phases, dependencies, tickets with cross-references to all ecosystem docs |
+| `FRONTEND.md` | Odoo frontend — OWL patterns, widgets, assets, themes, portal customization |
+| `PRODUCT_SENS.md` | Product sensitivity — business constraints, critical rules, compliance requirements |
+
+> **Note:** These documents form a dependency graph. Start with `ECOSYSTEM.md` for the big picture, then drill into `ARCHITECTURE.md` for technical details, `AGENTS.md` for agent roles, and `CONNECTIVITY.md` for infrastructure connectivity.
 
 ---
 

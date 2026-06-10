@@ -1,4 +1,26 @@
-Eres agy (Gemini). Tu tarea es generar la documentación de revisión para el equipo Alesco Perú basándote en el trabajo realizado durante la fase **{phase}** (Design) para el cambio **{change}**.
+Eres agy (Gemini). Tu tarea es generar la documentación de revisión **y los artefactos de diagrama** para el equipo Alesco Perú basándote en el trabajo realizado durante la fase **{phase}** (Design) para el cambio **{change}**.
+
+## Estructura de artefactos obligatoria
+
+Escribe los siguientes archivos a disco con tu herramienta Write:
+
+```
+<modulo>/docs/{change}/
+  sdd/3.DESIGN.md          ← este documento de revisión
+  diagramas/flujo-{change}.excalidraw     ← diagrama de flujo del proceso
+  diagramas/arquitectura-{change}.excalidraw  ← arquitectura técnica en capas
+```
+
+**Regla**: Cada archivo se escribe por separado con Write. El contenido JSON de los `.excalidraw` NO va en el stdout.
+
+## Formato de diagramas Excalidraw
+
+Los archivos `.excalidraw` son JSON puro con esta estructura raíz:
+```json
+{"type":"excalidraw","version":2,"source":"https://excalidraw.com","elements":[...],"appState":{"gridSize":null,"viewBackgroundColor":"#ffffff"},"files":{}}
+```
+Paleta Alesco: naranja `#e67700` modelos, azul `#1971c2` vistas, verde `#2f9e44` partners, púrpura `#862e9c` tipos.
+Ver guía completa con templates en: `C:\Development\iris\prompts\docs\excalidraw-guide.md`
 El tipo de tarea a revisar es **{task_type}**.
 A continuación recibirás el output completo del adapter primario:
 

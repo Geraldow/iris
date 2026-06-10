@@ -9,6 +9,7 @@ const DEFAULT_LIMITS: Record<AdapterName, number> = {
   kilo: 0.0,
   cursor: 0.0,
   opencode: 0.0,
+  'odoo-sh': 0.0,
 }
 
 function nextMidnight(): string {
@@ -70,6 +71,6 @@ export function isOverBudget(adapter: AdapterName): boolean {
 }
 
 export function getAllBudgets(): BudgetStatus[] {
-  const adapters: AdapterName[] = ['claude', 'antigravity', 'copilot', 'codex', 'kilo', 'cursor', 'opencode']
+  const adapters: AdapterName[] = ['claude', 'antigravity', 'copilot', 'codex', 'kilo', 'cursor', 'opencode', 'odoo-sh']
   return adapters.map(getDailyBudget)
 }

@@ -24,6 +24,7 @@ import { runInTerminal } from '../executor/terminal.js'
 import { saveTaskPrompt } from '../engram/sync.js'
 import { buildOdooContext, formatOdooContextForPrompt } from '../context/odoo.js'
 import { detectTaskType } from '../context/odoo-selector.js'
+import { detectSkills, extractFilePath } from '../context/context-detector.js'
 import { injectKnowledgeContext } from '../context/rules.js'
 import { generateDiagram } from '../diagrams/generator.js'
 import type { IAdapter, AdapterName, OdooTaskType, DelegateRequest, DelegateResult, PendingPlan } from '../types/index.js'
@@ -52,7 +53,7 @@ export const DelegateInputSchema = z.object({
   override: z.object({ model: z.string().optional(), effort: z.string().optional() }).optional(),
 })
 
-const ADAPTERS: Record<AdapterName, IAdapter> = {
+const ADAPTERS = {
   claude: new ClaudeAdapter(),
   antigravity: new AntigravityAdapter(),
   copilot: new CopilotAdapter(),
@@ -60,7 +61,7 @@ const ADAPTERS: Record<AdapterName, IAdapter> = {
   kilo: new KiloAdapter(),
   cursor: new CursorAdapter(),
   opencode: new OpenCodeAdapter(),
-}
+} as unknown as Record<AdapterName, IAdapter>
 
 function loadTemplate(phase: string): string {
   const templatePath = join(PROMPTS_DIR, `${phase}.md`)
@@ -114,6 +115,18 @@ async function buildPrompt(req: DelegateRequest, odooTaskType?: OdooTaskType): P
     }
   } catch { /* non-Odoo project — skip silently */ }
 
+  // Detected skills section
+  if (req.detectedSkills && req.detectedSkills.length > 0) {
+    const primarySkills = req.detectedSkills.filter(s => s.confidence >= 0.8)
+    if (primarySkills.length > 0) {
+      prompt += `\n\n## Detected Skills (auto-loaded)\n`
+      prompt += primarySkills.map(s =>
+        `- **${s.name}** (confidence: ${s.confidence})`
+      ).join('\n')
+      prompt += '\n'
+    }
+  }
+
   // Language detection: respond in the same language as the instruction
   prompt += `\n\n---\nDetect the language of the instruction above and respond entirely in that language. If the instruction is in Spanish, respond in Spanish. If in English, respond in English.`
 
@@ -165,6 +178,15 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
   // --- Detect Odoo task type (if applicable) ---
   const odooDetected = detectTaskType(req.instruction)
   const odooTaskType = odooDetected?.type
+
+  // --- Context Detection (auto-detect skills based on phase, instruction, task type) ---
+  const ctxDetected = detectSkills({
+    phase: req.phase,
+    instruction: req.instruction,
+    filePath: extractFilePath(req.instruction),
+    taskType: odooTaskType,
+  })
+  req.detectedSkills = ctxDetected.all
 
   // --- Score complexity & select adapter ---
   const score = scoreComplexity(req)

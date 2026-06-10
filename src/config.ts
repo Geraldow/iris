@@ -16,6 +16,13 @@ const DEFAULT_CONFIG: IrisConfig = {
     kilo:         { enabled: true, priority: 2, daily_budget_usd: 0.0 },
     cursor:       { enabled: true, priority: 2, daily_budget_usd: 0.0 },
     opencode:     { enabled: true, priority: 2, daily_budget_usd: 0.0 },
+    'odoo-sh':    { enabled: true, priority: 1, daily_budget_usd: 0.0 },
+  },
+  odoo_sh: {
+    project_id: '',
+    api_token: '',
+    ssh_key_path: '',
+    ssh_user: 'odoo',
   },
 }
 

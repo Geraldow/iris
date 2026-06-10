@@ -10,7 +10,7 @@ export type Phase =
   | 'document'
 
 export type ComplexityLevel = 'low' | 'medium' | 'high'
-export type AdapterName = 'claude' | 'antigravity' | 'copilot' | 'codex' | 'kilo' | 'cursor' | 'opencode'
+export type AdapterName = 'claude' | 'antigravity' | 'copilot' | 'codex' | 'kilo' | 'cursor' | 'opencode' | 'odoo-sh'
 
 export type OdooTaskType =
   | 'odoo-source' | 'odoo-orm' | 'odoo-view' | 'odoo-security'
@@ -52,6 +52,12 @@ export interface IAdapter {
 
 // ---------- Delegation flow ----------
 
+export interface SkillRequirement {
+  name: string
+  path: string
+  confidence: number
+}
+
 export interface DelegateRequest {
   phase: Phase
   instruction: string
@@ -64,6 +70,7 @@ export interface DelegateRequest {
   fire_and_forget?: boolean
   confirm?: string
   override?: { model?: string; effort?: string }
+  detectedSkills?: SkillRequirement[]
 }
 
 export interface PendingPlan {
@@ -170,7 +177,195 @@ export interface AdapterConfig {
   daily_budget_usd: number
 }
 
+export interface OdooShConfig {
+  project_id?: string
+  api_token?: string
+  ssh_key_path?: string
+  ssh_user?: string
+}
+
 export interface IrisConfig {
   confirm_threshold: ComplexityLevel | 'never'
   adapters: Record<AdapterName, AdapterConfig>
+  odoo_sh?: OdooShConfig
+}
+
+// ---------- Quality Scanner ----------
+
+export interface QualityDimension {
+  name: string
+  weight: number
+  checks: string[]
+}
+
+export interface QualityIssue {
+  rule: string
+  severity: 'critical' | 'major' | 'minor' | 'info'
+  deduction: number
+  message: string
+  fundamental?: string
+  uiVerification?: string
+  fix?: string
+  referenceUrl?: string
+}
+
+export interface ScoredDimension {
+  name: string
+  weight: number
+  weightLabel: string
+  score: number
+  scorePct: number
+  penalties: QualityIssue[]
+}
+
+export interface LearningMoment {
+  dimension: string
+  severity: string
+  concept: string
+  summary: string
+  referenceUrl: string
+}
+
+export interface QualityReport {
+  meta: {
+    module: string
+    version: string
+    odooVersion: string
+    evaluator: string
+    evaluatorVersion: string
+  }
+  overallScore: number
+  threshold: 'green' | 'yellow' | 'red'
+  dimensions: ScoredDimension[]
+  learningMoments: LearningMoment[]
+  reciprocalApprenticeship: {
+    learningMomentsCount: number
+    dimensionsWithExplanation: number
+    pillarsApplied: string[]
+    onionLevelTarget: number
+    generatedAt: string
+    methodologyReference: string
+  }
+}
+
+export interface ScanOptions {
+  modulePath: string
+  moduleName?: string
+  odooVersion?: string
+  includeLearningArtifact?: boolean
+}
+
+export type CiGate = 'pre-commit' | 'pr' | 'merge' | 'deploy'
+
+export interface CiGateResult {
+  passed: boolean
+  required: number
+  actual: number
+  message: string
+}
+
+// ---------- UI Map Engine ----------
+
+export interface NavigationRoute {
+  steps: string[]
+  url?: string
+  targetView?: string
+  relatedButtons?: string[]
+  raw: string
+}
+
+export interface UIMapEntry {
+  module: string
+  version: string
+  modelCount: number
+  viewCount: number
+  menuCount: number
+  lastParsed: string
+}
+
+export interface UIMapModelEntry {
+  name: string
+  displayName: string
+}
+
+export interface UIMapViewEntry {
+  id: string
+  name: string
+  model: string
+  type: string
+}
+
+export interface UIMapMenuEntry {
+  id: string
+  name: string
+  parent?: string
+  action?: string
+  path: string[]
+}
+
+export interface FieldEntry {
+  name: string
+  type: string
+  displayName: string
+  relation?: string
+  help?: string
+}
+
+export interface RelationEntry {
+  field: string
+  type: 'many2one' | 'one2many' | 'many2many'
+  targetModel: string
+}
+
+export interface ModelEntry {
+  name: string
+  displayName: string
+  fields: FieldEntry[]
+  relations: RelationEntry[]
+}
+
+export interface ViewSection {
+  type: 'tab' | 'page' | 'group' | 'notebook' | 'sheet'
+  name?: string
+  string?: string
+  fields: string[]
+  children: ViewSection[]
+}
+
+export interface ViewEntry {
+  id: string
+  name: string
+  model: string
+  type: 'form' | 'list' | 'kanban' | 'search' | 'activity' | 'gantt' | 'graph' | 'cohort' | 'dashboard'
+  inherit?: boolean
+  parentView?: string
+  fields: string[]
+  structure?: ViewSection[]
+}
+
+export interface MenuEntry {
+  id: string
+  name: string
+  parent?: string
+  action?: string
+  sequence: number
+  path: string[]
+}
+
+export interface ActionEntry {
+  id: string
+  name: string
+  model: string
+  type: 'ir.actions.act_window' | 'ir.actions.server' | 'ir.actions.report'
+  viewType?: string
+  viewId?: string
+}
+
+export interface UIMap {
+  module: string
+  version: string
+  models: ModelEntry[]
+  views: ViewEntry[]
+  menus: MenuEntry[]
+  actions: ActionEntry[]
 }

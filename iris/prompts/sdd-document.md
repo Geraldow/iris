@@ -30,7 +30,7 @@ You are tasked with generating the requested document and writing it directly to
    - Always place the diagram before its explanation.
    - Always prepend this EXACT init block — copy verbatim, do NOT change colors:
      ```
-     %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#161b22', 'primaryTextColor': '#e6edf3', 'primaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'secondaryColor': '#1e1e2e', 'tertiaryColor': '#0d2a2a', 'background': '#0d1117', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+      %%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
      ```
    - Use `flowchart` for architecture and data flow, `sequenceDiagram` for API interactions, `erDiagram` for schemas.
    - Never invent colors or skip the init block.

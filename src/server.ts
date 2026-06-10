@@ -5,6 +5,13 @@ import { handleStatus, handleSetup } from './tools/status.js'
 import { handleHistory, HistoryInputSchema } from './tools/history.js'
 import { handleTask, TaskInputSchema } from './tools/task.js'
 import { handleConfig, ConfigInputSchema } from './tools/config.js'
+import {
+  handleDiscover, DiscoverInputSchema,
+  handleLogs, LogsInputSchema,
+  handlePsql, PsqlInputSchema,
+  handleStatus as handleOdooStatus, StatusInputSchema,
+  handleBackups, BackupsInputSchema,
+} from './tools/odoo-sh.js'
 
 export function registerTools(server: McpServer): void {
   // iris_delegate — core orchestration tool
@@ -69,6 +76,63 @@ export function registerTools(server: McpServer): void {
     { adapter: z.string() },
     async (input) => {
       const result = await handleSetup(input)
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+    },
+  )
+
+  // --- Odoo.sh tools ---
+
+  // iris_odoo_sh_discover — dynamic SSH build discovery
+  server.tool(
+    'iris_odoo_sh_discover',
+    'Discover Odoo.sh SSH build URLs via API. Never hardcode build URLs.',
+    DiscoverInputSchema.shape,
+    async (input) => {
+      const result = await handleDiscover(input)
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+    },
+  )
+
+  // iris_odoo_sh_logs — fetch Odoo.sh logs via SSH
+  server.tool(
+    'iris_odoo_sh_logs',
+    'Fetch Odoo.sh logs via SSH (odoo.log, web.log, longpolling.log)',
+    LogsInputSchema.shape,
+    async (input) => {
+      const result = await handleLogs(input)
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+    },
+  )
+
+  // iris_odoo_sh_psql — read-only PostgreSQL query
+  server.tool(
+    'iris_odoo_sh_psql',
+    'Execute read-only PostgreSQL query via SSH on Odoo.sh. Destructive SQL blocked.',
+    PsqlInputSchema.shape,
+    async (input) => {
+      const result = await handlePsql(input)
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+    },
+  )
+
+  // iris_odoo_sh_status — instance health + resource status
+  server.tool(
+    'iris_odoo_sh_status',
+    'Get Odoo.sh instance health, memory, disk, DB size, and process info via SSH.',
+    StatusInputSchema.shape,
+    async (input) => {
+      const result = await handleOdooStatus(input)
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+    },
+  )
+
+  // iris_odoo_sh_backups — list or create backups
+  server.tool(
+    'iris_odoo_sh_backups',
+    'List available backups or trigger a new backup on Odoo.sh.',
+    BackupsInputSchema.shape,
+    async (input) => {
+      const result = await handleBackups(input)
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
     },
   )

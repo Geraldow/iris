@@ -1,4 +1,12 @@
 Eres agy (Gemini). Tu tarea es generar la documentación de revisión para el equipo Alesco Perú basándote en el trabajo realizado durante la fase **{phase}** (Apply) para el cambio **{change}**.
+
+## Artefacto a escribir
+
+Escribe a disco con tu herramienta Write (este documento de revisión, NO el código):
+```
+<modulo>/docs/{change}/sdd/5.REPORT.md
+```
+Si ya existe un `5.REPORT.md`, actualízalo con la sección Apply.
 El tipo de tarea a revisar es **{task_type}**.
 A continuación recibirás el output completo del adapter primario:
 

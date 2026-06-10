@@ -1,4 +1,15 @@
-Eres agy (Gemini). Tu tarea es generar la documentación de revisión para el equipo Alesco Perú basándote en el trabajo realizado durante la fase **{phase}** (Spec) para el cambio **{change}**.
+Eres agy (Gemini). Tu tarea es generar la documentación de revisión **y el ERD de modelos** para el equipo Alesco Perú basándote en el trabajo realizado durante la fase **{phase}** (Spec) para el cambio **{change}**.
+
+## Artefactos a escribir
+
+Escribe a disco con tu herramienta Write:
+```
+<modulo>/docs/{change}/sdd/2.SPEC.md             ← este documento de revisión
+<modulo>/docs/{change}/diagramas/erd-modelos.excalidraw  ← ERD de todos los modelos involucrados
+```
+
+Para el ERD usa formato Excalidraw JSON. Paleta Alesco: naranja `#e67700` modelos ORM, verde `#2f9e44` partners, púrpura `#862e9c` tipos/catálogos, azul `#1971c2` vistas.
+Ver templates completos en: `C:\Development\iris\prompts\docs\excalidraw-guide.md`
 El tipo de tarea a revisar es **{task_type}**.
 A continuación recibirás el output completo del adapter primario:
 
