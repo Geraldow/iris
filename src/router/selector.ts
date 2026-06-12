@@ -10,8 +10,7 @@ const PHASE_ADAPTER: Record<Phase, AdapterName> = {
   tasks:    'claude',       // Claude: dependency-ordered task breakdown
   apply:    'claude',       // Claude first; codex fallback for pure code
   verify:   'claude',       // Claude: behavioral validation
-  report:   'antigravity',  // Gemini: rich structured reports
-  document: 'antigravity',  // Gemini: PRD, ARCHITECTURE, CHANGELOG, diagrams
+  archive:  'antigravity',  // Gemini: structured archival, Engram sync
 }
 
 const PHASE_FALLBACK: Partial<Record<Phase, AdapterName>> = {
@@ -22,8 +21,7 @@ const PHASE_FALLBACK: Partial<Record<Phase, AdapterName>> = {
   tasks:    'copilot',
   apply:    'codex',        // codex is the fallback for code generation
   verify:   'antigravity',
-  report:   'claude',
-  document: 'claude',
+  archive:  'claude',
 }
 
 // Model maps per adapter × complexity
@@ -80,6 +78,11 @@ function resolveModelAndEffort(adapter: AdapterName, complexity: ComplexityLevel
       return { model: CURSOR_MODELS[complexity], effort: 'n/a' }
     case 'opencode':
       return { model: OPENCODE_MODELS[complexity], effort: 'n/a' }
+    case 'odoo-sh':
+      return { model: 'n/a', effort: 'n/a' }
+    default:
+      const _exhaustive: never = adapter
+      throw new Error(`Unknown adapter: ${adapter}`)
   }
 }
 

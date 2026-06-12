@@ -25,17 +25,17 @@ Estrategias de resiliencia para despliegues Odoo Enterprise en Odoo.sh: backups 
 ### Diseño para Falla
 - **What**: Todo componente puede fallar. El sistema debe degradarse gracefulmente, no colapsar. Los patrones de resiliencia (retry, circuit breaker, timeout, fallback, bulkhead, health check) se aplican a todas las conexiones externas.
 - **Why in Odoo**: Odoo.sh tiene URLs SSH dinámicas que cambian en cada push. PostgreSQL puede tener failover. El bridge puede estar en mantenimiento. Sin resiliencia, cualquier fallo transitorio detiene el desarrollo.
-- **Reference**: `RELIABILITY.md §1`, `RELIABILITY.md §5`
+- **Reference**: `docs/03-ARCHITECTURE.md §1`, `docs/03-ARCHITECTURE.md §5`
 
 ### Backup Strategy (3-2-1)
 - **What**: 3 copias de datos, 2 medios diferentes, 1 fuera del sitio. Odoo.sh implementa backups diarios (retención 7 días), semanales (4 semanas) y mensuales (12 meses), más backups bajo demanda.
 - **Why in Odoo**: La base de datos Odoo contiene transacciones, configuraciones y datos de negocio. Sin backups verificados, la pérdida de datos es irreversible. Un backup no verificado no es un backup.
-- **Reference**: `RELIABILITY.md §2`
+- **Reference**: `docs/03-ARCHITECTURE.md §2`
 
 ### Circuit Breaker Pattern
 - **What**: Patrón de resiliencia con 3 estados: **Closed** (operación normal, llamadas pasan), **Open** (3 fallos consecutivos, llamadas bloqueadas por 30s), **Half-Open** (después de 30s, 1 llamada de prueba permitida; si éxito → Closed, si fallo → Open).
 - **Why in Odoo**: La conexión SSH a Odoo.sh es dinámica — el build_id cambia con cada push. Si la conexión falla, no tiene sentido reintentar inmediatamente. El circuit breaker evita llamadas innecesarias y permite rediscovery automático.
-- **Reference**: `RELIABILITY.md §5.2`, `CONNECTIVITY.md §9`
+- **Reference**: `docs/03-ARCHITECTURE.md §5.2`, `docs/03-ARCHITECTURE.md §9`
 
 ## Core Content
 
@@ -177,4 +177,4 @@ Tiempos:
 - **Odoo.sh Docs**: `odoo.com/documentation/18.0/administration/odoo_sh.html`
 - **Odoo.sh Backups**: `odoo.com/documentation/18.0/administration/odoo_sh.html#backups`
 - **pg_stat_statements**: `postgresql.org/docs/current/pgstatstatements.html`
-- **iris Docs**: `RELIABILITY.md` (autoridad), `CONNECTIVITY.md §9` (Failure Modes), `CONNECTIVITY.md §8` (Security-Critical Connections), `SECURITY.md §8.2` (SSH policy), `ECOSYSTEM.md §3` (Reliability Engineering #13), `ECOSYSTEM.md §6` (Harness), `AGENTS.md §3` (Odoo Ops agent)
+- **iris Docs**: `docs/03-ARCHITECTURE.md` (autoridad), `docs/03-ARCHITECTURE.md §9` (Failure Modes), `docs/03-ARCHITECTURE.md §8` (Security-Critical Connections), `SECURITY.md §8.2` (SSH policy), `docs/01-PRD.md §3` (Reliability Engineering #13), `docs/01-PRD.md §6` (Harness), `AGENTS.md §3` (Odoo Ops agent)

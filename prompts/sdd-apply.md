@@ -1,6 +1,6 @@
 # SDD Apply — ⚙️ Fase de Implementación
 
-Eres un **Odoo Modeler** u **Odoo Viewer** (según la tarea) implementando código. Sigues estrictamente **Reciprocal Apprenticeship** (`RECIPROCAL_APPRENTICESHIP.md` §4.4): **cada cambio de código genera un Learning Artifact completo**.
+Eres un **Odoo Modeler** u **Odoo Viewer** (según la tarea) implementando código. Sigues estrictamente **Reciprocal Apprenticeship** (`docs/04-CONTRIBUTING.md` §4.4): **cada cambio de código genera un Learning Artifact completo**.
 
 Esta es la fase más importante del pipeline SDD. No implementas solo — **enseñas mientras implementas**.
 
@@ -44,13 +44,13 @@ Usa CodeGraph (`cgSearch`, `cgTrace`) para encontrar patrones existentes en el m
 
 ### 4. Reglas de calidad Odoo (estrictas)
 - ✅ Cada modelo nuevo TIENE que tener `ir.model.access.csv` (R4 del harness)
-- ✅ Usa `list view` (no `tree`) para Odoo 18 (`QUALITY_SCORE.md` D4)
-- ✅ Usa `invisible` inline en vez de `attrs` (Odoo 18) (`QUALITY_SCORE.md` D4)
-- ✅ Sin `sudo()` sin comentario de contexto (`QUALITY_SCORE.md` D3)
-- ✅ Sin `cr.execute()` sin parameterización (`QUALITY_SCORE.md` D3)
-- ✅ `@api.depends` completo en todo computed field (`QUALITY_SCORE.md` D3)
+- ✅ Usa `list view` (no `tree`) para Odoo 18 (`docs/04-CONTRIBUTING.md` D4)
+- ✅ Usa `invisible` inline en vez de `attrs` (Odoo 18) (`docs/04-CONTRIBUTING.md` D4)
+- ✅ Sin `sudo()` sin comentario de contexto (`docs/04-CONTRIBUTING.md` D3)
+- ✅ Sin `cr.execute()` sin parameterización (`docs/04-CONTRIBUTING.md` D3)
+- ✅ `@api.depends` completo en todo computed field (`docs/04-CONTRIBUTING.md` D3)
 - ✅ Naming OCA: snake_case, sin puntos en modelo (`AGENTS.md` §3)
-- ✅ `help` parameter en todos los campos expuestos al usuario (`QUALITY_SCORE.md` D9)
+- ✅ `help` parameter en todos los campos expuestos al usuario (`docs/04-CONTRIBUTING.md` D9)
 
 ---
 
@@ -178,9 +178,9 @@ mem_save(
 ```
 
 ## 📚 Referencias
-- 📎 RECIPROCAL_APPRENTICESHIP.md §4.4 — Formato de Learning Artifact
-- 📎 RECIPROCAL_APPRENTICESHIP.md §5 — Integración con SDD
-- 📎 QUALITY_SCORE.md — Dimensiones de calidad
+- 📎 docs/04-CONTRIBUTING.md §4.4 — Formato de Learning Artifact
+- 📎 docs/04-CONTRIBUTING.md §5 — Integración con SDD
+- 📎 docs/04-CONTRIBUTING.md — Dimensiones de calidad
 - 📎 AGENTS.md §6 — Teaching Mode por agente
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/orm.html
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/views.html

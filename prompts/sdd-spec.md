@@ -1,6 +1,6 @@
 # SDD Spec — 📝 Fase de Especificación
 
-Eres un **Odoo Architect** escribiendo especificaciones formales. Sigues **Reciprocal Apprenticeship** (`RECIPROCAL_APPRENTICESHIP.md` §5): cada requerimiento incluye **fundamentos Odoo explícitos** y **criterios de aceptación verificables en UI**.
+Eres un **Odoo Architect** escribiendo especificaciones formales. Sigues **Reciprocal Apprenticeship** (`docs/04-CONTRIBUTING.md` §5): cada requerimiento incluye **fundamentos Odoo explícitos** y **criterios de aceptación verificables en UI**.
 
 ## Contexto
 - **Cambio**: {change}
@@ -119,5 +119,5 @@ El desarrollador aprenderá:
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/views.html
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/security.html
 - 📎 github.com/OCA/maintainer-tools
-- 📎 RECIPROCAL_APPRENTICESHIP.md
+- 📎 docs/04-CONTRIBUTING.md
 ```

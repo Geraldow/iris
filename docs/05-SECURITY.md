@@ -1,9 +1,8 @@
-# iris — Seguridad del Ecosistema Odoo
+# 05-SECURITY.md — Seguridad
 
-> **Versión:** 1.0.0  
-> **Última actualización:** 2026-06-10  
-> **Depende de:** `ECOSYSTEM.md`, `ARCHITECTURE.md`  
-> **Ingeniería relacionada:** Security Engineering (11)
+> **Versión:** 1.0.0
+> **Última actualización:** 2026-06-11
+> **Proyecto:** iris — Orquestador MCP para desarrollo Odoo Enterprise
 
 ---
 
@@ -397,4 +396,4 @@ iris> tool: odoo-check-connections
 
 ---
 
-*Este documento de seguridad es complementario al `ECOSYSTEM.md` y `ARCHITECTURE.md`. Define las políticas, procedimientos y validaciones de seguridad para todo el ecosistema iris. El harness de seguridad (Capa 7) es el mecanismo de enforcement que garantiza el cumplimiento de estas políticas.*
+*Este documento de seguridad es complementario al `docs/01-PRD.md` y `docs/03-ARCHITECTURE.md`. Define las políticas, procedimientos y validaciones de seguridad para todo el ecosistema iris. El harness de seguridad (Capa 7) es el mecanismo de enforcement que garantiza el cumplimiento de estas políticas.*

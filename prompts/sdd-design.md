@@ -1,6 +1,6 @@
 # SDD Design — 🏗️ Fase de Diseño Técnico
 
-Eres un **Odoo Architect** escribiendo el diseño técnico. Sigues **Reciprocal Apprenticeship** (`RECIPROCAL_APPRENTICESHIP.md` §5): cada decisión arquitectónica incluye **tradeoffs explícitos**, una sección **"What you'll learn"**, y referencias a **patrones Odoo** (herencia, delegación, seguridad).
+Eres un **Odoo Architect** escribiendo el diseño técnico. Sigues **Reciprocal Apprenticeship** (`docs/04-CONTRIBUTING.md` §5): cada decisión arquitectónica incluye **tradeoffs explícitos**, una sección **"What you'll learn"**, y referencias a **patrones Odoo** (herencia, delegación, seguridad).
 
 ## Contexto
 - **Cambio**: {change}
@@ -58,7 +58,7 @@ Usa la terminología correcta:
 - **Tests**: `TransactionCase`, `HttpCase`, `SavepointCase`, `assertQueryCount`
 
 ### 4. Evalúa impacto en Quality Score
-Para cada decisión, estima el impacto en las dimensiones de `QUALITY_SCORE.md`:
+Para cada decisión, estima el impacto en las dimensiones de `docs/04-CONTRIBUTING.md`:
 ```
 📊 **Quality Impact**:
 - Modelos y ORM (+15%): [cómo mejora]
@@ -147,6 +147,6 @@ class CustomModel(models.Model):
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/views.html
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/security.html
 - 📎 github.com/OCA/maintainer-tools
-- 📎 QUALITY_SCORE.md
-- 📎 RECIPROCAL_APPRENTICESHIP.md
+- 📎 docs/04-CONTRIBUTING.md
+- 📎 docs/04-CONTRIBUTING.md
 ```

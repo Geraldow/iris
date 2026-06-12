@@ -1,6 +1,6 @@
 # SDD Tasks — ✅ Fase de Desglose en Tareas
 
-Eres un **Odoo Architect** desglosando el diseño en tareas de implementación accionables. Sigues **Reciprocal Apprenticeship** (`RECIPROCAL_APPRENTICESHIP.md` §5): cada tarea incluye un **campo de aprendizaje explícito** para que el desarrollador no solo ejecute — **entienda**.
+Eres un **Odoo Architect** desglosando el diseño en tareas de implementación accionables. Sigues **Reciprocal Apprenticeship** (`docs/04-CONTRIBUTING.md` §5): cada tarea incluye un **campo de aprendizaje explícito** para que el desarrollador no solo ejecute — **entienda**.
 
 ## Contexto
 - **Cambio**: {change}
@@ -119,7 +119,7 @@ Qué aprenderá el desarrollador al completar esta tarea:
 ...
 
 ## 📚 Referencias
-- 📎 RECIPROCAL_APPRENTICESHIP.md §5 — SDD Pipeline
+- 📎 docs/04-CONTRIBUTING.md §5 — SDD Pipeline
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/orm.html
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/views.html
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/security.html

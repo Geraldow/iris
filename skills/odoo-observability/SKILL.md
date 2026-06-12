@@ -26,17 +26,17 @@ Instrumentación de módulos Odoo con OpenTelemetry para tracing de ORM calls, H
 ### OpenTelemetry en Odoo
 - **What**: OpenTelemetry es un framework de observabilidad open source que permite generar, recolectar y exportar trazas, métricas y logs. En Odoo, se integra a nivel de ORM, HTTP controllers y RPC calls para medir latencia de cada operación.
 - **Why in Odoo**: Las queries lentas en Odoo son el problema de performance más común. Sin tracing, es imposible saber qué operación específica está causando lentitud. Con OTel, cada llamada ORM genera un span con duración, query SQL, modelo y método.
-- **Reference**: `CONNECTIVITY.md §4.4`, `odoo.com/documentation/18.0/developer/reference/backend/orm.html#performance`
+- **Reference**: `docs/03-ARCHITECTURE.md §4.4`, `odoo.com/documentation/18.0/developer/reference/backend/orm.html#performance`
 
 ### CRITICAL: opentelemetry-distro-odoo (free) vs dkn_otel (paid)
 - **What**: `opentelemetry-distro-odoo` es una distribución gratuita (Apache-2.0) de OpenTelemetry para Odoo. `dkn_otel` es una alternativa paga ($24.99/mes, OPL-1). `az_opentelemetry` también es paga ($20.00/mes, OPL-1).
-- **Why in Odoo**: El principio de costo cero operativo del ecosistema iris (`docs/ECOSYSTEM.md §9`) exige que ningún componente requiera suscripción de pago. `dkn_otel` está explícitamente prohibido por ADR-005.
-- **Reference**: `pypi.org/project/opentelemetry-distro-odoo/`, `ARCHITECTURE.md ADR-005`, `ECOSYSTEM.md §9`
+- **Why in Odoo**: El principio de costo cero operativo del ecosistema iris (`docs/01-PRD.md §9`) exige que ningún componente requiera suscripción de pago. `dkn_otel` está explícitamente prohibido por ADR-005.
+- **Reference**: `pypi.org/project/opentelemetry-distro-odoo/`, `docs/02-ADR.md ADR-005`, `docs/01-PRD.md §9`
 
 ### OTLP Protocol
 - **What**: OpenTelemetry Protocol (OTLP) es el protocolo estándar para exportar datos de observabilidad. Soporta transporte gRPC (puerto 4317) y HTTP (puerto 4318).
 - **Why in Odoo**: La elección entre gRPC y HTTP depende del entorno: gRPC es más eficiente para alto throughput (producción); HTTP es más simple para debugging local o detrás de proxies que no soportan HTTP/2.
-- **Reference**: `CONNECTIVITY.md §5`, `opentelemetry.io/docs/reference/specification/protocol/`
+- **Reference**: `docs/03-ARCHITECTURE.md §5`, `opentelemetry.io/docs/reference/specification/protocol/`
 
 ## Core Content
 
@@ -147,4 +147,4 @@ iris> tool: odoo-cost-audit
 - **OpenTelemetry Protocol**: `opentelemetry.io/docs/reference/specification/protocol/`
 - **Grafana Cloud Free Tier**: `grafana.com/products/cloud/`
 - **Odoo ORM Performance**: `odoo.com/documentation/18.0/developer/reference/backend/orm.html#performance`
-- **iris Docs**: `CONNECTIVITY.md §4.4` (Observability Flow), `CONNECTIVITY.md §5` (Port and Endpoint Reference), `ECOSYSTEM.md §9` (Zero Cost), `ARCHITECTURE.md ADR-005` (OTel gratis), `AGENTS.md §3` (Odoo Observable agent), `SECURITY.md` (audit trails)
+- **iris Docs**: `docs/03-ARCHITECTURE.md §4.4` (Observability Flow), `docs/03-ARCHITECTURE.md §5` (Port and Endpoint Reference), `docs/01-PRD.md §9` (Zero Cost), `docs/02-ADR.md ADR-005` (OTel gratis), `AGENTS.md §3` (Odoo Observable agent), `SECURITY.md` (audit trails)

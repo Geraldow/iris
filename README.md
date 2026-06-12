@@ -14,7 +14,7 @@
 
 ---
 
-[Why Iris?](#why-iris) • [MCP Tools](#mcp-tools) • [Adapters](#adapters) • [Architecture](#architecture) • [Engram IPC Flow](#engram-ipc-flow) • [Quick Start](#quick-start) • [Configuration](#configuration) • [SDD Integration](#sdd-integration) • [Credits](#credits)
+[Why Iris?](#why-iris) • [MCP Tools](#mcp-tools) • [Adapters](#adapters) • [Architecture](#architecture) • [Engram IPC Flow](#engram-ipc-flow) • [Quick Start](#quick-start) • [Configuration](#configuration) • [SDD Integration](#sdd-integration) • [Documentation](#documentation-ecosystem) • [Credits](#credits)
 
 </div>
 
@@ -235,23 +235,20 @@ iris_delegate --phase apply --instruction "Implement SQLite migrations and schem
 
 ## Documentation Ecosystem
 
-Iris ships with a comprehensive set of documentation that defines the entire ecosystem. All documents are in the project root:
+Iris ships with a comprehensive documentation set organized under `docs/`:
 
 | Document | Purpose |
 |----------|---------|
-| `ECOSYSTEM.md` | Master document — architecture, 13 engineering disciplines, SDD pipeline, skills, harness, costs, roadmap |
-| `ARCHITECTURE.md` | Technical architecture — components, ADRs, data flow, interfaces, scalability |
 | `AGENTS.md` | Odoo specialist agents — 7 roles (Architect, Modeler, Viewer, Tester, Reviewer, Ops, Observable) with Onion Model |
-| `CONNECTIVITY.md` | Connectivity matrix — protocols, ports, dependencies, failure modes, security zones |
-| `RECIPROCAL_APPRENTICESHIP.md` | Reciprocal Apprenticeship methodology — 4 pillars, Learning Artifacts, progression layers |
-| `SECURITY.md` | Security — 7-layer model, SSH/Token policies, audit trails, SDD security checklist |
-| `RELIABILITY.md` | Reliability — backups, disaster recovery, resilience patterns, circuit breaker, runbooks, SLOs |
-| `QUALITY_SCORE.md` | Quality system — 10 dimensions (D1-D10), weighted scoring, thresholds, PR Gates |
-| `PLANS.md` | Implementation plan — phases, dependencies, tickets with cross-references to all ecosystem docs |
-| `FRONTEND.md` | Odoo frontend — OWL patterns, widgets, assets, themes, portal customization |
-| `PRODUCT_SENS.md` | Product sensitivity — business constraints, critical rules, compliance requirements |
+| `docs/01-PRD.md` | Product Requirements Document — vision, problem statement, requirements, engineering disciplines, roadmap |
+| `docs/02-ADR.md` | Architecture Decision Records — 12 ADRs with context, decisions, consequences, and alternatives |
+| `docs/03-ARCHITECTURE.md` | Technical architecture — components, data flow, protocols, security zones, resilience patterns |
+| `docs/04-CONTRIBUTING.md` | Contribution guide — OCA standards, quality system, Reciprocal Apprenticeship methodology, SDD pipeline |
+| `docs/05-SECURITY.md` | Security — 7-layer model, SSH/Token policies, audit trails, SDD security checklist |
+| `docs/06-CHANGELOG.md` | Version history — Keep a Changelog format, 9 releases from v0.1.0-beta to v1.1.6 |
+| `docs/07-TP.md` | Test Plan — 28 test cases across 8 test suites, CI pipeline, coverage targets |
 
-> **Note:** These documents form a dependency graph. Start with `ECOSYSTEM.md` for the big picture, then drill into `ARCHITECTURE.md` for technical details, `AGENTS.md` for agent roles, and `CONNECTIVITY.md` for infrastructure connectivity.
+> **Note:** Start with `AGENTS.md` for the agent system, then `docs/01-PRD.md` for product vision, and `docs/03-ARCHITECTURE.md` for technical details. The recommended reading order is: `AGENTS.md` → `01-PRD.md` → `03-ARCHITECTURE.md` → `04-CONTRIBUTING.md`.
 
 ---
 

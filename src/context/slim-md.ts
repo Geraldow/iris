@@ -19,8 +19,6 @@ export function buildTaskPreamble(phase: string, odooTaskType?: OdooTaskType): s
     lines.push(`Knowledge: ${cfg.knowledgeFiles[0]}`)
   } else if (['propose', 'spec', 'design', 'tasks'].includes(phase)) {
     lines.push('Focus: SDD artifact. Follow template structure exactly.')
-  } else if (phase === 'document') {
-    lines.push('Focus: Technical doc. Clear, concise, no filler.')
   } else if (phase === 'apply') {
     lines.push('Focus: Code implementation. Write files as specified.')
   }

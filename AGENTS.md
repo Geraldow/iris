@@ -4,7 +4,7 @@
 > **Última actualización:** 2026-06-10  
 > **Estado:** ✅ Completo — define el sistema de agentes especializados Odoo de iris  
 > **Autor:** Fairw — Systems Engineer & Senior Odoo Architect  
-> **Depende de:** `ECOSYSTEM.md`, `ARCHITECTURE.md`, `CONNECTIVITY.md`, `RECIPROCAL_APPRENTICESHIP.md`  
+> **Depende de:** `docs/01-PRD.md`, `docs/03-ARCHITECTURE.md`, `docs/04-CONTRIBUTING.md`  
 > **Ingeniería relacionada:** Agent Engineering (3), Context Engineering (4), Orchestration Engineering (8), Observability Engineering (10)
 
 ---
@@ -23,7 +23,7 @@
 
 ## 1. Agent Philosophy
 
-Cada agente en iris es un **especialista Odoo** — NO un asistente AI general. Su diseño sigue los principios de **Reciprocal Apprenticeship** definidos en `RECIPROCAL_APPRENTICESHIP.md`:
+Cada agente en iris es un **especialista Odoo** — NO un asistente AI general. Su diseño sigue los principios de **Reciprocal Apprenticeship** definidos en `docs/04-CONTRIBUTING.md`:
 
 | Principio | Significado |
 |-----------|-------------|
@@ -120,7 +120,7 @@ flowchart TD
 | **Modo enseñanza** | Explica POR QUÉ se eligió un patrón vs alternativas. Muestra el estándar OCA y la referencia de docs de Odoo. Compara con módulos OCA reales |
 | **Personalidad** | Senior, experimentado, cita módulos OCA específicos como ejemplos ("en `sale_isolated_quotation` de OCA...") |
 | **Contexto necesario** | Versión Odoo, estructura de módulos existente, módulos OCA usados en el proyecto, decisiones ADR previas |
-| **Referencias** | OCA maintainer-tools, Odoo module reference, `ARCHITECTURE.md` ADR-001 al ADR-007 |
+| **Referencias** | OCA maintainer-tools, Odoo module reference, `docs/02-ADR.md` ADR-001 al ADR-007 |
 
 **Ejemplo de interacción:**
 
@@ -324,11 +324,11 @@ Reviewer: "Revisión completada. Score: 82/100 🟡
 | **Especialidad** | Odoo.sh SSH dinámico, logs (journalctl, tail), backups (listado, restore), builds (status, CI), PostgreSQL (queries, índices, performance), monitoreo |
 | **Skills que carga** | `odoo-ops` (operaciones seguras SSH/DB), `odoo-docker` (Docker Odoo), `odoo-service` (ciclo de vida del servidor) |
 | **Se activa por** | Despliegue, requests SSH, análisis de logs, backup/restore, debugging de producción, health checks |
-| **Quality gates** | Conexiones security-critical verificadas (por `SECURITY.md` y `CONNECTIVITY.md`). Llaves SSH ed25519 obligatorias. Comandos destructivos siempre confirman. Logs parseados, no crudos |
+| **Quality gates** | Conexiones security-critical verificadas (por `SECURITY.md` y `docs/03-ARCHITECTURE.md`). Llaves SSH ed25519 obligatorias. Comandos destructivos siempre confirman. Logs parseados, no crudos |
 | **Modo enseñanza** | Por cada comando de operaciones: explica la arquitectura de infraestructura, qué significa cada línea de log, modos de fallo, y por qué se eligió cada approach |
 | **Personalidad** | Calmado bajo presión, metódico, explica el "por qué" de la infraestructura. Piensa en disaster recovery primero |
 | **Contexto necesario** | URL del proyecto Odoo.sh, ruta de llave SSH, build_id actual (descubrimiento automático), rama target |
-| **Referencias** | Odoo.sh docs, `SECURITY.md` §8.2 (SSH policy), `CONNECTIVITY.md` §8 (Security-Critical Connections), `RELIABILITY.md` §7 (Runbooks) |
+| **Referencias** | Odoo.sh docs, `SECURITY.md` §8.2 (SSH policy), `docs/03-ARCHITECTURE.md` §8 (Security-Critical Connections), `docs/03-ARCHITECTURE.md` §7 (Runbooks) |
 
 **⚠️ Advertencia: Odoo.sh SSH URLs son dinámicas**
 
@@ -382,7 +382,7 @@ Odoo Ops: "Descubriendo build actual...
 | **Modo enseñanza** | Por cada trace: explica el flujo del request, dónde se gasta el tiempo, cómo optimizar cada span lento. Interpreta EXPLAIN ANALYZE y lo traduce a español |
 | **Personalidad** | Data-driven, analítico, traza todo. Piensa en números y percentiles. Nunca optimiza sin medir primero |
 | **Contexto necesario** | Endpoint OTel (Grafana Cloud o local), módulo a instrumentar, período de análisis, umbral de slow query (>100ms) |
-| **Referencias** | `opentelemetry-distro-odoo` (PyPI), OpenTelemetry docs, `ARCHITECTURE.md` ADR-005 |
+| **Referencias** | `opentelemetry-distro-odoo` (PyPI), OpenTelemetry docs, `docs/02-ADR.md` ADR-005 |
 
 **⚠️ Cost warning: usar opentelemetry-distro-odoo (gratis)**
 
@@ -957,20 +957,20 @@ Cada agente utiliza una plantilla de enseñanza estructurada para cumplir el pri
 
 | Concepto | Documento | Sección |
 |----------|-----------|---------|
-| Agent Engineering | `ECOSYSTEM.md` | §3 — Ingeniería 3 |
-| Pipeline SDD | `ECOSYSTEM.md` | §4 — 8 fases |
-| Reciprocal Apprenticeship | `RECIPROCAL_APPRENTICESHIP.md` | §2 — 4 Pillars |
-| Onion Model de aprendizaje | `RECIPROCAL_APPRENTICESHIP.md` | §9 — Progresión |
-| Learning Artifact | `RECIPROCAL_APPRENTICESHIP.md` | §4.4 — Formato |
-| Skills del sistema | `ECOSYSTEM.md` | §5 — Catálogo y carga |
-| Context Engine | `ECOSYSTEM.md` | §5.1 — Detección |
-| Harness de Enforcement | `ECOSYSTEM.md` | §6 — Quality gates |
-| ADR-007: Skills en Markdown | `ARCHITECTURE.md` | §4 — Skills como conocimiento |
-| Seguridad en conexiones | `CONNECTIVITY.md` | §8 — Zonas de seguridad |
-| SSH Dinámico | `CONNECTIVITY.md` | §3 — Protocolos |
-| Bridge auth | `CONNECTIVITY.md` | §8.1 — Token |
-| Costos (zero-cost) | `ECOSYSTEM.md` | §9 — $0 operativo |
-| Reliability patterns | `RELIABILITY.md` | §5 — Resilience |
+| Agent Engineering | `docs/01-PRD.md` | §3 — Ingeniería 3 |
+| Pipeline SDD | `docs/01-PRD.md` | §4 — 8 fases |
+| Reciprocal Apprenticeship | `docs/04-CONTRIBUTING.md` | §2 — 4 Pillars |
+| Onion Model de aprendizaje | `docs/04-CONTRIBUTING.md` | §9 — Progresión |
+| Learning Artifact | `docs/04-CONTRIBUTING.md` | §4.4 — Formato |
+| Skills del sistema | `docs/01-PRD.md` | §5 — Catálogo y carga |
+| Context Engine | `docs/01-PRD.md` | §5.1 — Detección |
+| Harness de Enforcement | `docs/01-PRD.md` | §6 — Quality gates |
+| ADR-007: Skills en Markdown | `docs/02-ADR.md` | §4 — Skills como conocimiento |
+| Seguridad en conexiones | `docs/03-ARCHITECTURE.md` | §8 — Zonas de seguridad |
+| SSH Dinámico | `docs/03-ARCHITECTURE.md` | §3 — Protocolos |
+| Bridge auth | `docs/03-ARCHITECTURE.md` | §8.1 — Token |
+| Costos (zero-cost) | `docs/01-PRD.md` | §9 — $0 operativo |
+| Reliability patterns | `docs/03-ARCHITECTURE.md` | §5 — Resilience |
 | Security policy SSH | `SECURITY.md` | §8.2 — ed25519 |
 
 ### Enlaces Directos
@@ -1056,6 +1056,6 @@ iris> tool: agent-handoff --from "Modeler" --to "Reviewer"
 
 ---
 
-*Este documento define el sistema de agentes especialistas Odoo del ecosistema iris. Cada agente es un rol con personalidad, skills, quality gates y modo de enseñanza propios. La organización en capas (Onion Model) permite activar solo los agentes necesarios para cada tarea, optimizando el uso de contexto. La integración con el pipeline SDD garantiza que cada fase tenga el agente correcto. El Teaching Mode asegura que cada interacción produzca aprendizaje, siguiendo la metodología Reciprocal Apprenticeship definida en `RECIPROCAL_APPRENTICESHIP.md`.*
+*Este documento define el sistema de agentes especialistas Odoo del ecosistema iris. Cada agente es un rol con personalidad, skills, quality gates y modo de enseñanza propios. La organización en capas (Onion Model) permite activar solo los agentes necesarios para cada tarea, optimizando el uso de contexto. La integración con el pipeline SDD garantiza que cada fase tenga el agente correcto. El Teaching Mode asegura que cada interacción produzca aprendizaje, siguiendo la metodología Reciprocal Apprenticeship definida en `docs/04-CONTRIBUTING.md`.*
 
 *Cualquier cambio a este documento (nuevo agente, cambio de gates, nueva skill) requiere una propuesta SDD y aprobación explícita.*

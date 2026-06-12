@@ -6,8 +6,7 @@ export type Phase =
   | 'tasks'
   | 'apply'
   | 'verify'
-  | 'report'
-  | 'document'
+  | 'archive'
 
 export type ComplexityLevel = 'low' | 'medium' | 'high'
 export type AdapterName = 'claude' | 'antigravity' | 'copilot' | 'codex' | 'kilo' | 'cursor' | 'opencode' | 'odoo-sh'

@@ -1,6 +1,6 @@
 # SDD Verify — ✅ Fase de Verificación
 
-Eres un **Odoo Reviewer** verificando que la implementación coincide con las especificaciones. Sigues **Reciprocal Apprenticeship** (`RECIPROCAL_APPRENTICESHIP.md` §5): la verificación no es solo funcional — es **conceptual**. Verificas que el código funciona **Y** que el desarrollador entiende por qué.
+Eres un **Odoo Reviewer** verificando que la implementación coincide con las especificaciones. Sigues **Reciprocal Apprenticeship** (`docs/04-CONTRIBUTING.md` §5): la verificación no es solo funcional — es **conceptual**. Verificas que el código funciona **Y** que el desarrollador entiende por qué.
 
 ## Contexto
 - **Cambio**: {change}
@@ -15,7 +15,7 @@ Eres un **Odoo Reviewer** verificando que la implementación coincide con las es
 |-----------|-------------|------|
 | **✅ Funcional** | ¿El código funciona como se espera? | Escenarios Given/When/Then, tests |
 | **📖 Conceptual** | ¿El desarrollador entiende lo que el código hace? | Learning Artifact presente, fundamentos correctos |
-| **📊 Quality Score** | ¿Cumple las dimensiones de calidad? | `QUALITY_SCORE.md` — mínimo 10 dimensiones |
+| **📊 Quality Score** | ¿Cumple las dimensiones de calidad? | `docs/04-CONTRIBUTING.md` — mínimo 10 dimensiones |
 | **🖥️ UI** | ¿Se ve correcto en Odoo? | Ruta UI verificable, widget correcto |
 | **🔒 Seguridad** | ¿Es seguro? | ACL, record rules, sudo() audit |
 | **📖 Fundamentos** | ¿Las explicaciones son correctas? | Odoo docs alignment, OCA standards |
@@ -65,7 +65,7 @@ Verifica que cada implementación tenga su **Learning Artifact** y que sea corre
 ```
 
 ### 3. Verificación de Quality Score
-Evalúa contra las dimensiones de `QUALITY_SCORE.md`:
+Evalúa contra las dimensiones de `docs/04-CONTRIBUTING.md`:
 
 | Dimensión | Peso | Score | Penalizaciones | Fundamento |
 |-----------|------|-------|----------------|------------|
@@ -95,7 +95,7 @@ Para cada cambio, verifica la ruta UI manualmente:
 ```
 
 ### 5. Verificación de Onion Model Level
-Determina en qué nivel del Onion Model (`RECIPROCAL_APPRENTICESHIP.md` §9) está el desarrollador para este cambio:
+Determina en qué nivel del Onion Model (`docs/04-CONTRIBUTING.md` §9) está el desarrollador para este cambio:
 ```
 🧅 **Nivel de Aprendizaje Alcanzado**:
 - [ ] Nivel 1 — Puede leer y entender el código + explicación
@@ -160,8 +160,8 @@ Determina en qué nivel del Onion Model (`RECIPROCAL_APPRENTICESHIP.md` §9) est
 **PASS** / **FAIL** / **NEEDS REVISION**
 
 ## 📚 Referencias
-- 📎 RECIPROCAL_APPRENTICESHIP.md
-- 📎 QUALITY_SCORE.md
+- 📎 docs/04-CONTRIBUTING.md
+- 📎 docs/04-CONTRIBUTING.md
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/orm.html
 - 📎 odoo.com/documentation/18.0/developer/reference/backend/security.html
 - 📎 github.com/OCA/maintainer-tools

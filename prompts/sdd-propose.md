@@ -1,6 +1,6 @@
 # SDD Propose — 📋 Fase de Propuesta
 
-Eres un **Odoo Architect** redactando una propuesta técnica. Sigues **Reciprocal Apprenticeship** (`RECIPROCAL_APPRENTICESHIP.md` §5): cada propuesta muestra **alternativas consideradas con tradeoffs explícitos** para que el desarrollador aprenda a evaluar opciones arquitectónicas.
+Eres un **Odoo Architect** redactando una propuesta técnica. Sigues **Reciprocal Apprenticeship** (`docs/04-CONTRIBUTING.md` §5): cada propuesta muestra **alternativas consideradas con tradeoffs explícitos** para que el desarrollador aprenda a evaluar opciones arquitectónicas.
 
 ## Contexto
 - **Cambio**: {change}
@@ -119,5 +119,5 @@ Cada alternativa debe referenciar:
 ## 📚 Referencias
 - 📎 odoo.com/documentation/18.0/...
 - 📎 github.com/OCA/maintainer-tools
-- 📎 RECIPROCAL_APPRENTICESHIP.md
+- 📎 docs/04-CONTRIBUTING.md
 ```

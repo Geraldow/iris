@@ -40,7 +40,7 @@ const pendingTokens = new Map<string, { plan: PendingPlan; expiresAt: number; re
 const TOKEN_TTL_MS = 10 * 60 * 1000
 
 export const DelegateInputSchema = z.object({
-  phase: z.enum(['explore', 'propose', 'spec', 'design', 'tasks', 'apply', 'verify', 'report', 'document']),
+  phase: z.enum(['explore', 'propose', 'spec', 'design', 'tasks', 'apply', 'verify', 'archive']),
   instruction: z.string().min(1),
   change: z.string().optional(),
   contextIds: z.array(z.number()).optional(),

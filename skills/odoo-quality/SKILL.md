@@ -25,12 +25,12 @@ Sistema de evaluación de calidad para módulos Odoo basado en 10 dimensiones po
 ### Quality Philosophy
 - **What**: La calidad no es un semáforo — es una oportunidad de aprendizaje. Cada medición responde: ¿Qué falló? ¿Por qué importa? ¿Cómo verificarlo en UI? ¿Cómo arreglarlo con comprensión?
 - **Why in Odoo**: Un módulo Odoo puede funcionar correctamente y aun así violar principios de seguridad, performance o mantenibilidad que se manifiestan como problemas graves en producción.
-- **Reference**: `QUALITY_SCORE.md §1`, `RECIPROCAL_APPRENTICESHIP.md §2`
+- **Reference**: `docs/04-CONTRIBUTING.md §1`, `docs/04-CONTRIBUTING.md §2`
 
 ### Scoring Formula
 - **What**: `QUALITY_SCORE = Σ(weight_i × score_i)` para 10 dimensiones. Cada dimensión empieza en 1.0 y aplica penalizaciones multiplicativas.
 - **Why in Odoo**: La ponderación refleja el impacto real en producción — ORM (20%) y Seguridad (15%) tienen el mayor peso porque sus fallas son las más costosas.
-- **Reference**: `QUALITY_SCORE.md §3`
+- **Reference**: `docs/04-CONTRIBUTING.md §3`
 
 ### Quality Thresholds
 - 🟢 **≥ 90**: Production ready — merge/deploy automático
@@ -97,7 +97,7 @@ Cada evaluación produce un reporte JSON estándar:
     "pillars_applied": ["Human-First", "Fundamentals-First", "Transparency"],
     "onion_level_target": 2,
     "generated_at": "2026-06-10T12:00:00Z",
-    "methodology_reference": "RECIPROCAL_APPRENTICESHIP.md"
+    "methodology_reference": "docs/04-CONTRIBUTING.md"
   }
 }
 ```
@@ -124,7 +124,7 @@ Cada penalización debe incluir obligatoriamente el formato RA:
 | **Merge a main** | 85 | Bloquea merge |
 | **Producción** | 90 | Bloquea deploy (requiere aprobación manual si < 90) |
 
-Los gates se implementan como parte del Harness de Enforcement (`ECOSYSTEM.md §6`):
+Los gates se implementan como parte del Harness de Enforcement (`docs/01-PRD.md §6`):
 
 ```yaml
 # .github/workflows/quality-gates.yml
@@ -170,5 +170,5 @@ Esto permite trazabilidad histórica, detección de regresiones, y comparación 
 - **Odoo Docs**: `odoo.com/documentation/18.0/developer/reference/backend/`
 - **OCA Quality Guidelines**: `github.com/OCA/maintainer-tools/blob/master/tools/quality.md`
 - **OCA Module Structure**: `github.com/OCA/maintainer-tools`
-- **iris Docs**: `QUALITY_SCORE.md` (autoridad), `ECOSYSTEM.md §3` (Quality Engineering #12), `ECOSYSTEM.md §6` (Harness), `RECIPROCAL_APPRENTICESHIP.md §4.4` (Learning Artifact), `AGENTS.md §3` (Agentes Reviewer y Tester)
+- **iris Docs**: `docs/04-CONTRIBUTING.md` (autoridad), `docs/01-PRD.md §3` (Quality Engineering #12), `docs/01-PRD.md §6` (Harness), `docs/04-CONTRIBUTING.md §4.4` (Learning Artifact), `AGENTS.md §3` (Agentes Reviewer y Tester)
 - **Research**: Comeau (2026), DORA (2024), METR (2025), Sonar (2025)
