@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
+import pkgJson from '../package.json' with { type: 'json' }
 
 const PACKAGE_ROOT = join(fileURLToPath(import.meta.url), '..', '..')
 const REPO = 'Geraldow/iris'
@@ -17,10 +18,7 @@ interface UpdateCache {
 let _cache: UpdateCache | null = null
 
 export function getCurrentVersion(): string {
-  try {
-    const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, 'package.json'), 'utf-8'))
-    return String(pkg.version ?? '0.0.0')
-  } catch { return '0.0.0' }
+  return String(pkgJson.version)
 }
 
 function compareVersions(a: string, b: string): number {

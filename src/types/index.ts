@@ -91,7 +91,7 @@ export interface DelegateResult {
   tokens?: number
   cost_usd?: number
   duration_ms?: number
-  status: 'done' | 'pending_confirmation' | 'failed' | 'fallback'
+  status: 'done' | 'pending_confirmation' | 'failed' | 'fallback' | 'dry_run'
   plan?: PendingPlan
   confirm_token?: string
   summary?: string   // first line of output — full content is in Engram at engramId

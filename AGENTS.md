@@ -1,7 +1,7 @@
 # AGENTS.md — Agentes Especialistas Odoo del Ecosistema iris
 
-> **Versión:** 1.0.0  
-> **Última actualización:** 2026-06-10  
+> **Versión:** 1.1.7  
+> **Última actualización:** 2026-06-16  
 > **Estado:** ✅ Completo — define el sistema de agentes especializados Odoo de iris  
 > **Autor:** Fairw — Systems Engineer & Senior Odoo Architect  
 > **Depende de:** `docs/01-PRD.md`, `docs/03-ARCHITECTURE.md`, `docs/04-CONTRIBUTING.md`  
@@ -69,7 +69,7 @@ Layer 4 — Operations:
 ### Diagrama del Onion Model
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph L1 ["🧅 Layer 1 — Core Odoo (siempre activo)"]
         ARCH[Odoo Architect\nArquitecto Técnico]
@@ -428,7 +428,7 @@ Odoo Observable: "Consultando trazas OTel en Grafana Cloud...
 ### Diagrama General de Comunicación
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 sequenceDiagram
     autonumber
     actor DEV as Desarrollador
@@ -533,7 +533,7 @@ Cada fase del pipeline SDD tiene un agente primario responsable y agentes de sop
 ### Matriz de Responsabilidades por Fase
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     subgraph FasesSDD ["Pipeline SDD"]
         EXPLORE[Explore] --> PROPOSE[Propose]

@@ -5,7 +5,7 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-22d3ee?style=flat-square)
 ![Node 22+](https://img.shields.io/badge/node-22%2B-22d3ee?style=flat-square)
 ![MCP Server](https://img.shields.io/badge/mcp--server-iris-a855f7?style=flat-square)
-![Version 1.1.6](https://img.shields.io/badge/version-1.1.6-22d3ee?style=flat-square)
+![Version 1.1.7](https://img.shields.io/badge/version-1.1.7-22d3ee?style=flat-square)
 
 **One router. Every agent. Full control.**
 
@@ -72,7 +72,7 @@ Iris normalizes CLI commands for each underlying agent executor. The router dele
 The following diagram illustrates how Iris acts as a central hub between the developer's agent session, the local database, the complexity-aware routing layer, and the underlying AI adapters communicating via Engram:
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TB
     user(["👤 User / Developer"])
     mcp["🔌 Iris MCP Server"]

@@ -8,8 +8,8 @@ export class CodexAdapter extends BaseAdapter {
   async execute(prompt: string, model: string, effort: string): Promise<string> {
     const result = await execa(
       'codex',
-      ['exec', '-m', model, '-c', `reasoning_effort="${effort}"`, prompt],
-      { timeout: 15 * 60 * 1000, reject: false }
+      ['exec', '-m', model, '-c', `reasoning_effort="${effort}"`],
+      { input: prompt, timeout: 15 * 60 * 1000, reject: false }
     )
 
     if (result.exitCode !== 0) {

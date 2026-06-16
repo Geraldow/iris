@@ -193,7 +193,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
   const selection = selectAdapter(
     req.phase,
     score.level,
-    req.override ? undefined : undefined,
+    undefined,
     req.override?.model,
     req.override?.effort,
     odooTaskType,
@@ -236,15 +236,29 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
     prompt: await buildPrompt(req, odooTaskType),
   }
 
+  if (req.dry_run) {
+    return {
+      taskId: 'dry-run',
+      adapter: plan.adapter,
+      model: plan.model,
+      effort: plan.effort,
+      complexity: plan.complexity,
+      status: 'dry_run',
+      plan,
+    }
+  }
+
   return executeTask(req, plan, odooTaskType)
 }
 
 async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType?: OdooTaskType): Promise<DelegateResult> {
-  // --- Circuit breaker + budget check with fallback ---
+  // --- Circuit breaker + budget + enabled check with fallback ---
   let adapterName = plan.adapter
-  if (!isAvailable(adapterName) || isOverBudget(adapterName)) {
-    const { fallback } = selectAdapter(req.phase, plan.complexity)
-    if (!fallback || !isAvailable(fallback) || isOverBudget(fallback)) {
+  const cfg = getConfig()
+  const isEnabled = (name: AdapterName) => cfg.adapters[name]?.enabled !== false
+  if (!isEnabled(adapterName) || !isAvailable(adapterName) || isOverBudget(adapterName)) {
+    const { fallback } = selectAdapter(req.phase, plan.complexity, undefined, undefined, undefined, odooTaskType)
+    if (!fallback || !isEnabled(fallback) || !isAvailable(fallback) || isOverBudget(fallback)) {
       throw new Error(`All adapters unavailable or over budget for phase=${req.phase}`)
     }
     adapterName = fallback

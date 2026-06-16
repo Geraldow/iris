@@ -7,8 +7,17 @@
 
 ## [Unreleased]
 
-### Planned
-- Próximos cambios en desarrollo
+### Fixed
+- `src/index.ts`: `McpServer` tenía versión hardcodeada `'1.0.0'` — ahora lee dinámicamente de `pkgJson.version`. El MCP server reportaba v1.0.0 aunque iris estuviera en v1.1.7.
+- `src/server.ts`: tool `status` renombrado a `iris_status` para consistencia con la convención `iris_*` de todos los demás tools y con lo documentado en README y docs.
+- `AGENTS.md`: versión actualizada de `1.0.0` → `1.1.7` y fecha `2026-06-10` → `2026-06-16`.
+- `README.md`: badge de versión actualizado `1.1.6` → `1.1.7`.
+- `src/tools/delegate.ts`: `dry_run: true` no prevenía la ejecución — solo saltaba el two-phase commit gate. Ahora retorna early con `status: 'dry_run'` antes de llamar `executeTask`.
+- `src/tools/delegate.ts`: ternario dead code `req.override ? undefined : undefined` reemplazado con `undefined` directo en llamada a `selectAdapter`.
+- `src/updater.ts`: `getCurrentVersion()` fallaba con `'0.0.0'` al ejecutar iris como SEA binary — `import.meta.url` no apunta a disco en ese contexto. Ahora usa import estático de `pkgJson.version`.
+- `src/types/index.ts`: `DelegateResult.status` no incluía `'dry_run'` en el union type — causaría error TypeScript al compilar tras el fix en delegate.ts.
+- `src/adapters/codex.ts`: prompt pasado como CLI arg causaba `"command line too long"` en Windows para prompts grandes. Ahora se pasa via `input` (stdin) en execa.
+
 
 ---
 
