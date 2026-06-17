@@ -237,8 +237,8 @@ async function main() {
     ok('node_modules/ presente')
   }
 
-  // ─── Step 1: Build dist ──────────────────────────────
-  step(1, TOTAL, 'Verificando build TypeScript...')
+  // ─── Step 1: Build dist y compilar iris.exe ────────
+  step(1, TOTAL, 'Compilando TypeScript y generando iris.exe...')
   if (!existsSync(DIST_ENTRY)) {
     info('dist/index.js no existe -- compilando TypeScript...')
     const result = spawnSync('npx', ['tsc'], { cwd: PACKAGE_ROOT, stdio: 'inherit', timeout: 120000 })
@@ -249,6 +249,24 @@ async function main() {
     }
   } else {
     ok('dist/index.js presente')
+  }
+
+  // Compilar .exe con Bun (standalone, sin dependencia de Node.js)
+  const EXE_PATH = join(PACKAGE_ROOT, 'iris.exe')
+  const bunAvail = check('bun --version')
+  if (bunAvail) {
+    info('Compilando iris.exe con Bun...')
+    const exeResult = spawnSync('bun', ['build', DIST_ENTRY, '--compile', '--target', 'bun-windows-x64', '--outfile', EXE_PATH], {
+      cwd: PACKAGE_ROOT, stdio: 'inherit', timeout: 120000,
+    })
+    if (exeResult.status === 0) {
+      ok(`iris.exe generado -> ${EXE_PATH}`)
+    } else {
+      warn('Error al compilar iris.exe')
+    }
+  } else {
+    warn('Bun no disponible -- saltando compilacion a .exe')
+    warn('  Para compilar manual: bun build dist/index.js --compile --target bun-windows-x64 --outfile iris.exe')
   }
 
   // ─── Step 2: Tool verification ───────────────────────
@@ -499,25 +517,54 @@ async function main() {
     warn('Engram no disponible -- instalar desde GitHub releases')
   }
 
-  // ─── Step 10: Register MCPs ───────────────────────────
-  step(10, TOTAL, 'Registrando MCPs en Claude Code...')
+  // ─── Step 10: Register MCP iris ────────────────────────
+  step(10, TOTAL, 'Registrando MCP iris en editores...')
 
-  if (!existsSync(DIST_ENTRY)) {
-    warn('dist/index.js no existe -- MCP iris NO registrado')
-    warn('Corra: npx tsc en el directorio del proyecto')
+  const hasExe = existsSync(EXE_PATH)
+  const hasDist = existsSync(DIST_ENTRY)
+
+  if (!hasExe && !hasDist) {
+    warn('iris.exe y dist/index.js no existen -- MCP iris NO registrado')
+    warn('Corra: npx tsc && bun build dist/index.js --compile --target bun-windows-x64 --outfile iris.exe')
   } else {
+    // Usar .exe si existe, sino node dist/index.js
+    const mcpCommand = hasExe
+      ? [EXE_PATH]
+      : ['node', DIST_ENTRY]
+
+    // ── Claude Desktop ────────────────────────────────
     try {
-      let config: any = {}
+      let claudeConfig: any = {}
       if (existsSync(CLAUDE_CONFIG)) {
-        config = JSON.parse(readFileSync(CLAUDE_CONFIG, 'utf-8'))
+        claudeConfig = JSON.parse(readFileSync(CLAUDE_CONFIG, 'utf-8'))
       }
-      config.mcpServers = config.mcpServers ?? {}
-      config.mcpServers['iris'] = { command: 'node', args: [DIST_ENTRY] }
-      writeFileSync(CLAUDE_CONFIG, JSON.stringify(config, null, 2))
-      ok(`iris MCP registrado -> ${DIST_ENTRY}`)
-      ok(`Config: ${CLAUDE_CONFIG}`)
+      claudeConfig.mcpServers = claudeConfig.mcpServers ?? {}
+      claudeConfig.mcpServers['iris'] = hasExe
+        ? { command: EXE_PATH }
+        : { command: 'node', args: [DIST_ENTRY] }
+      writeFileSync(CLAUDE_CONFIG, JSON.stringify(claudeConfig, null, 2))
+      ok(`Claude Desktop: iris MCP registrado (${hasExe ? 'iris.exe' : 'node'})`)
     } catch (err) {
-      warn(`No se pudo actualizar claude_desktop_config.json: ${(err as Error).message}`)
+      warn(`No se pudo actualizar Claude Desktop config: ${(err as Error).message}`)
+    }
+
+    // ── OpenCode ──────────────────────────────────────
+    const OPENCODE_CONFIG_PATH = join(process.env['USERPROFILE'] ?? homedir(), '.config', 'opencode', 'opencode.json')
+    try {
+      let opencodeConfig: any = {}
+      if (existsSync(OPENCODE_CONFIG_PATH)) {
+        opencodeConfig = JSON.parse(readFileSync(OPENCODE_CONFIG_PATH, 'utf-8'))
+      }
+      opencodeConfig.mcp = opencodeConfig.mcp ?? {}
+      opencodeConfig.mcp['iris'] = {
+        command: mcpCommand,
+        enabled: true,
+        type: 'local',
+      }
+      writeFileSync(OPENCODE_CONFIG_PATH, JSON.stringify(opencodeConfig, null, 2))
+      ok(`OpenCode: iris MCP registrado (${hasExe ? 'iris.exe' : 'node'})`)
+    } catch (err) {
+      warn(`No se pudo actualizar OpenCode config: ${(err as Error).message}`)
     }
   }
 

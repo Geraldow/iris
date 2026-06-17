@@ -28,12 +28,12 @@ You are tasked with generating the requested document and writing it directly to
 4. **Follow Requested Structure**: Carefully read the task definition in the context IDs to understand the exact structure, format, and sections required for the {deliverable}.
 5. **Use Mermaid Diagrams**: When creating architecture, sequence, database design, or flow documents, include high-quality Mermaid diagrams. Follow these rules strictly:
    - Always place the diagram before its explanation.
-   - Always prepend this EXACT init block — copy verbatim, do NOT change colors:
-     ```
-      %%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
-     ```
-   - Use `flowchart` for architecture and data flow, `sequenceDiagram` for API interactions, `erDiagram` for schemas.
-   - Never invent colors or skip the init block.
+   - Always prepend this exact init block — do NOT add `themeVariables`:
+      ```
+       %%{init: {'theme': 'dark'}}%%
+      ```
+    - Use `flowchart` for architecture and data flow, `sequenceDiagram` for API interactions, `erDiagram` for schemas.
+    - Never invent colors or skip the init block. Let `theme: 'dark'` handle all colors automatically.
 6. **Write Directly to Disk**: Write the completed document DIRECTLY to the target path: {outputPath}. You MUST use your file system tools (e.g. creating/writing files) to write the content directly to the file system. Never just print the content in your response expecting the user to save it.
 7. **Complete the Task**: After successfully writing the file to {outputPath}, output a brief summary of what was generated, and end your response with exactly this line on its own:
 

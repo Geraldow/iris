@@ -23,6 +23,11 @@ export async function handleConfig(input: unknown): Promise<object> {
   // action === 'set'
   if (!key) throw new Error('key is required for set action')
   const keys = key.split('.')
+  // Coerce string primitives to proper types
+  const coerced = value === 'true' ? true
+    : value === 'false' ? false
+    : (typeof value === 'string' && value !== '' && !isNaN(Number(value))) ? Number(value)
+    : value
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updated: any = { ...config }
   let ref = updated
@@ -30,7 +35,7 @@ export async function handleConfig(input: unknown): Promise<object> {
     ref[keys[i]] = { ...ref[keys[i]] }
     ref = ref[keys[i]]
   }
-  ref[keys[keys.length - 1]] = value
+  ref[keys[keys.length - 1]] = coerced
   saveConfig(updated)
-  return { key, value, status: 'saved' }
+  return { key, value: coerced, status: 'saved' }
 }

@@ -40,7 +40,7 @@ iris es un **orquestador MCP (Model Context Protocol)** diseñado para el desarr
 ### 1.2 C4 Context Diagram
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph CapaPresentacion ["Capa de Presentación (MCP)"]
         MCP[MCP Protocol\nFastMCP Server]
@@ -300,7 +300,7 @@ proposal -> specs --> tasks -> apply -> verify -> archive
 ### 3.1 Communication Flows
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 sequenceDiagram
     autonumber
     actor DEV as Desarrollador
@@ -440,7 +440,7 @@ iris descubre `build_id` automáticamente consultando la API REST de Odoo.sh ant
 #### Security Zones Diagram
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     subgraph ZonaLocal ["🔒 Zona Local (Confianza Total)"]
         IRIS[iris MCP]
@@ -601,7 +601,7 @@ Por ahora, el frontend de Odoo se maneja exclusivamente a través de los módulo
 #### Circuit Breaker State Machine
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 stateDiagram-v2
     [*] --> Closed: Inicio
 
@@ -635,7 +635,7 @@ stateDiagram-v2
 ### 5.3 Disaster Recovery
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     FAIL{Fallo Detectado} --> TYPE{¿Tipo de fallo?}
 
@@ -711,7 +711,7 @@ Al iniciar, iris ejecuta:
 ### 6.1 Engram Data Flow
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     USER[Usuario] -->|"tarea: nuevo feature"| IRIS[iris]
     IRIS -->|"1. detectTaskType()"| CTX[Context Engine]
@@ -774,7 +774,7 @@ iris no implementa una capa de cache tradicional. La estrategia se basa en:
 ### 7.1 Diagrama de Despliegue
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph Local ["Entorno Local del Desarrollador"]
         DEV[Desarrollador\nCLI / IDE]
@@ -829,7 +829,7 @@ flowchart TD
 ### 7.2 Estrategia de Escalado
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph Individual ["Desarrollador Individual"]
         I1[iris local\n1 proyecto Odoo]

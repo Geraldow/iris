@@ -28,15 +28,22 @@ async function getClient(): Promise<Client | null> {
   try {
     const transport = new StdioClientTransport({
       command: resolveCodeGraphBin(),
-      args: ['mcp'],
+      args: ['serve', '--mcp'],
     })
     _client = new Client(
       { name: 'iris-codegraph', version: '1.0.0' },
       { capabilities: {} },
     )
-    await _client.connect(transport)
+    // Timeout prevents indefinite hang if codegraph exits without sending initialize
+    await Promise.race([
+      _client.connect(transport),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('codegraph connect timeout')), 5000)
+      ),
+    ])
     return _client
   } catch {
+    _client = null
     return null
   }
 }

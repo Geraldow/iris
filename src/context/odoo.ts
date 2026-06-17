@@ -1,5 +1,5 @@
-import { join } from 'path'
-import { cgSearch } from '../codegraph/client.js'
+import { existsSync, readFileSync } from 'fs'
+import { join, dirname } from 'path'
 import { resolveAlescoPaths } from '../config/local.js'
 import { getCurrentBranch } from '../executor/git.js'
 import { detectTaskType, TASK_CONFIG } from './odoo-selector.js'
@@ -19,20 +19,25 @@ function getModuleName(): string {
   return process.cwd().split(/[/\\]/).filter(Boolean).pop() ?? 'unknown'
 }
 
+function findManifest(startDir: string): string | null {
+  let dir = startDir
+  for (let i = 0; i < 4; i++) {
+    const candidate = join(dir, '__manifest__.py')
+    if (existsSync(candidate)) return candidate
+    const parent = dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  return null
+}
+
 export async function buildOdooContext(
   instruction?: string,
 ): Promise<OdooContext | null> {
-  // Use CodeGraph to find __manifest__.py
-  const searchResult = await cgSearch('__manifest__.py') as any
-  if (searchResult?.error) return null
+  const manifestPath = findManifest(process.cwd())
+  if (!manifestPath) return null
 
-  // Extract manifest content from CodeGraph result
-  const files = searchResult?.result?.content ?? searchResult?.content ?? []
-  const manifestEntry = Array.isArray(files)
-    ? files.find((f: any) => f?.name?.includes('__manifest__.py') || f?.path?.includes('__manifest__.py'))
-    : null
-
-  const manifestContent: string = manifestEntry?.content ?? manifestEntry?.text ?? ''
+  const manifestContent = readFileSync(manifestPath, 'utf-8')
   if (!manifestContent) return null
 
   const version = parseManifestField(manifestContent, 'version') ?? '18.0'

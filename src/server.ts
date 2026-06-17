@@ -16,7 +16,7 @@ import {
 export function registerTools(server: McpServer): void {
   // iris_delegate — core orchestration tool
   server.tool(
-    'iris_delegate',
+    'delegate',
     'Delegate a task to the best AI adapter based on phase and complexity',
     DelegateInputSchema.shape,
     async (input) => {
@@ -27,7 +27,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_status — health + budget overview
   server.tool(
-    'iris_status',
+    'status',
     'Get status of all adapters including circuit breaker state and daily budget',
     {},
     async () => {
@@ -38,7 +38,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_history — task execution log
   server.tool(
-    'iris_history',
+    'history',
     'Retrieve task execution history',
     HistoryInputSchema.shape,
     async (input) => {
@@ -49,7 +49,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_task — single task detail
   server.tool(
-    'iris_task',
+    'task',
     'Get details of a specific task by ID',
     TaskInputSchema.shape,
     async (input) => {
@@ -60,7 +60,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_config — read/write configuration
   server.tool(
-    'iris_config',
+    'config',
     'Get or update Iris configuration',
     ConfigInputSchema.shape,
     async (input) => {
@@ -71,7 +71,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_setup — verify and configure Engram per adapter
   server.tool(
-    'iris_setup',
+    'setup',
     'Verify and auto-configure Engram MCP for a given adapter',
     { adapter: z.string() },
     async (input) => {
@@ -84,7 +84,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_odoo_sh_discover — dynamic SSH build discovery
   server.tool(
-    'iris_odoo_sh_discover',
+    'odoo_sh_discover',
     'Discover Odoo.sh SSH build URLs via API. Never hardcode build URLs.',
     DiscoverInputSchema.shape,
     async (input) => {
@@ -95,7 +95,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_odoo_sh_logs — fetch Odoo.sh logs via SSH
   server.tool(
-    'iris_odoo_sh_logs',
+    'odoo_sh_logs',
     'Fetch Odoo.sh logs via SSH (odoo.log, web.log, longpolling.log)',
     LogsInputSchema.shape,
     async (input) => {
@@ -106,7 +106,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_odoo_sh_psql — read-only PostgreSQL query
   server.tool(
-    'iris_odoo_sh_psql',
+    'odoo_sh_psql',
     'Execute read-only PostgreSQL query via SSH on Odoo.sh. Destructive SQL blocked.',
     PsqlInputSchema.shape,
     async (input) => {
@@ -117,7 +117,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_odoo_sh_status — instance health + resource status
   server.tool(
-    'iris_odoo_sh_status',
+    'odoo_sh_status',
     'Get Odoo.sh instance health, memory, disk, DB size, and process info via SSH.',
     StatusInputSchema.shape,
     async (input) => {
@@ -128,7 +128,7 @@ export function registerTools(server: McpServer): void {
 
   // iris_odoo_sh_backups — list or create backups
   server.tool(
-    'iris_odoo_sh_backups',
+    'odoo_sh_backups',
     'List available backups or trigger a new backup on Odoo.sh.',
     BackupsInputSchema.shape,
     async (input) => {

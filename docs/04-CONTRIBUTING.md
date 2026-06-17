@@ -124,7 +124,7 @@ iris quality-score --module ./alesco_api_bridge --output report.json
 ### 3.1 Branch Strategy
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 gitgraph TB
     commit id: "init"
     branch develop
@@ -209,7 +209,7 @@ Nunca ejecutes estos comandos a menos que la gobernanza del proyecto lo autorice
 ### 3.3 Pull Request Process
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     DEV[Developer] -->|Push| CI{CI Validation}
     CI -->|TypeScript OK| QG{Quality Gate}
@@ -468,7 +468,7 @@ class SaleOrder(models.Model):
 El sistema de calidad de iris evalúa módulos Odoo en **10 dimensiones ponderadas**. Cada dimensión tiene un peso específico, checks automatizados y penalizaciones claras.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 pie title Distribución de Pesos por Dimensión
     "Modelos y ORM" : 20
     "Vistas y UX" : 15
@@ -528,7 +528,7 @@ contribución = 0.15 × 0.0 = 0.0
 ### 5.3 Minimum Thresholds
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     SCORE[QUALITY_SCORE<br/>0 - 100] --> DECIDE
     
@@ -550,7 +550,7 @@ flowchart LR
 ### 5.4 Gate Enforcement
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     START[Developer commit] --> PRE_COMMIT{Pre-commit Hook<br/>Score ≥ 70?}
     
@@ -750,7 +750,7 @@ iris opera bajo la metodología **Reciprocal Apprenticeship** (Aprendizaje Recí
 iris utiliza el pipeline **Spec-Driven Development (SDD)** de 8 fases secuenciales. Cada fase tiene un **agente especialista** responsable (ver `AGENTS.md` §5):
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     EXP[Explore<br/>Odoo Architect]:::phase --> PRO[Propose<br/>Odoo Architect]:::phase
     PRO --> SPEC[Spec<br/>Odoo Architect]:::phase

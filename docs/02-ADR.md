@@ -89,7 +89,7 @@ iris se comunica con multiples componentes: Engram (memoria), CodeGraph (analisi
 Usar **Model Context Protocol (MCP)** como protocolo unico de comunicacion entre iris y todos sus componentes internos. MCP es un protocolo JSON-RPC 2.0 que define tres primitivas: **Tools** (funciones invocables con parametros tipados), **Resources** (datos expuestos con URI scheme), y **Prompts** (templates de instrucciones precargables). El transport subyacente puede ser STDIO (local) o SSE (remoto), pero el protocolo es siempre MCP.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     subgraph MCPEco ["Ecosistema MCP"]
         IRIS[iris MCP Server]
@@ -139,7 +139,7 @@ iris necesita recordar decisiones arquitectonicas, artefactos SDD, contexto de s
 - UI Maps aprendidos (posicion de campos en vistas XML de Odoo)
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     IRIS[iris MCP Server]
     SDD[Pipeline SDD\n8 fases]
@@ -217,7 +217,7 @@ iris **descubre dinamicamente** el `build_id` consultando la API REST de Odoo.sh
 5. Si la conexion falla, rediscovery automatico
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     A[Developer pide\nlogs SSH] --> B[Consultar API Odoo.sh\nGET /api/1/projects/...]
     B --> C{build_id\nigual al cache?}
@@ -407,7 +407,7 @@ Implementar **tres patrones de resiliencia** en todas las conexiones externas:
 | **Timeout** | Tiempo maximo de espera por operacion | Bridge: 10s, SSH: 15s, API Odoo.sh: 5s |
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 stateDiagram-v2
     [*] --> Closed: Inicio
     Closed --> Open: 3 fallos consecutivos

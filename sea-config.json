@@ -1,0 +1,6 @@
+{
+  "main": "dist/bundle.cjs",
+  "output": "dist/sea.blob",
+  "mainFormat": "commonjs",
+  "disableExperimentalSEAWarning": true
+}

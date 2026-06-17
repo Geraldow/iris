@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { readFileSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import { BaseAdapter } from './base.js'
@@ -20,6 +20,11 @@ interface AntigravitySettings {
 
 export class AntigravityAdapter extends BaseAdapter {
   name: AdapterName = 'antigravity'
+
+  isAvailable(): boolean {
+    // agy has a hardcoded full path — check if the binary file exists
+    return existsSync(AGY_BIN)
+  }
 
   private readSettings(): AntigravitySettings {
     try {

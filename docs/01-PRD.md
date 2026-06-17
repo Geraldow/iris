@@ -276,7 +276,7 @@ iris 1.0.0 is implemented in 5 phases over approximately 14 weeks (July–Octobe
 ### 9.2 Dependency Map
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph F0["Fase 0: Foundation"]
         P0[refactor-sdd-prompts]
@@ -448,7 +448,7 @@ flowchart TD
 ### 12.3 Context Diagram
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph Developer["👨‍💻 Odoo Developer"]
         DEV[CLI / MCP Client]

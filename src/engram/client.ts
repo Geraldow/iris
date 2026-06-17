@@ -30,12 +30,19 @@ export async function getEngramClient(): Promise<Client> {
     args: ['mcp'],
   })
 
-  _client = new Client(
+  const client = new Client(
     { name: 'iris', version: '1.0.0' },
     { capabilities: {} },
   )
 
-  await _client.connect(transport)
+  await Promise.race([
+    client.connect(transport),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('engram connect timeout')), 8000)
+    ),
+  ])
+
+  _client = client
   return _client
 }
 

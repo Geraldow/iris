@@ -7,3 +7,8 @@
 # Run `iris_setup` to auto-detect this value from your Google Drive installation.
 
 alesco_path: # example: G:\My Drive\[1] YourName\[4] Work\Alesco
+
+# db_schema: absolute path to db/schema.sql
+# Solo necesario si el binario compilado no resuelve la ruta relativa.
+# Usar forward slashes o doble backslash en Windows.
+# db_schema: C:/Development/iris/db/schema.sql

@@ -35,7 +35,7 @@
 ## 2. Modelo de Seguridad en Capas
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph L7 ["Capa 7: Harness de Seguridad"]
         LINT[Security Linter]
@@ -177,7 +177,7 @@ safe_eval(user_input, {'self': self})  # ¡PELIGROSO!
 ### Diagrama de Comunicaciones Seguras
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     subgraph iris_env ["Entorno iris"]
         IRIS[iris\nMCP Server]
@@ -273,7 +273,7 @@ Cada agente tiene un **budget de seguridad** que no puede exceder:
 ### Diagrama de Auditoría
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     subgraph Accion ["Acción"]
         USER[Usuario] -->|consulta| BRIDGE[alesco_api_bridge]

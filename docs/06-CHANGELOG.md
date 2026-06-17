@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+### Added
+- `src/tools/status.ts` — `handleSetup` ahora verifica realmente:
+  - Binario del adapter via `--version` + fallback `where`/`which`
+  - Conectividad Engram MCP vía `mem_stats`
+  - Estado del adapter en configuración
+  - Health general compuesto (binary + engram + enabled)
+  - Mensajes de instalación cuando el binario no se encuentra
+  - `src/adapters/claude.ts`: `isAvailable()` — detecta si `claude` CLI está instalado
+  - `src/adapters/antigravity.ts`: `isAvailable()` — detecta si `agy.exe` existe en disco
+  - `src/adapters/codex.ts`: `isAvailable()` — detecta si `codex` CLI está instalado
+  - `src/adapters/copilot.ts`: `isAvailable()` — detecta si `gh` CLI está instalado
+
 ### Fixed
 - `src/index.ts`: `McpServer` tenía versión hardcodeada `'1.0.0'` — ahora lee dinámicamente de `pkgJson.version`. El MCP server reportaba v1.0.0 aunque iris estuviera en v1.1.7.
 - `src/server.ts`: tool `status` renombrado a `iris_status` para consistencia con la convención `iris_*` de todos los demás tools y con lo documentado en README y docs.

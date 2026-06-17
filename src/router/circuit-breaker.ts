@@ -54,6 +54,6 @@ export function getStatus(adapter: AdapterName): { state: 'closed' | 'open' | 'h
 }
 
 export function getAllStatuses(): Record<AdapterName, ReturnType<typeof getStatus>> {
-  const adapters: AdapterName[] = ['claude', 'antigravity', 'copilot', 'codex']
+  const adapters: AdapterName[] = ['claude', 'antigravity', 'copilot', 'codex', 'kilo', 'cursor', 'opencode']
   return Object.fromEntries(adapters.map(a => [a, getStatus(a)])) as Record<AdapterName, ReturnType<typeof getStatus>>
 }

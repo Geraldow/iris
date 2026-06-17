@@ -116,7 +116,7 @@ iris se compone de 17 capas arquitectonicas organizadas en una jerarquia de abst
 El diagrama siguiente presenta una vista general de todas las capas y sus relaciones:
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph CapaMCP ["1.1 MCP Server Layer"]
         MCP[MCP Server\nFastMCP STDIO]
@@ -286,7 +286,7 @@ El pipeline SDD (Spec-Driven Development) es el corazon del flujo de trabajo de 
 **Grafo de dependencias:**
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     EXPLORE[Explore] --> PROPOSE[Propose]
     PROPOSE --> SPEC[Spec]
@@ -463,7 +463,7 @@ El Delegate Engine es el orquestador central del sistema. Con 374 lineas en `src
 **Flujo del Delegate Engine:**
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 sequenceDiagram
     autonumber
     participant MCP as MCP Tool "delegate"
@@ -802,7 +802,7 @@ La integracion con Odoo.sh permite ejecutar comandos remotos en instancias de Od
 **Arquitectura de conexion:**
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 sequenceDiagram
     participant IRIS as iris
     participant API as API REST Odoo.sh
@@ -1204,7 +1204,7 @@ Criterios de Aceptacion:
 **Flujo de apply:**
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6eb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     TASKS[Tasks Phase] --> APPLY[Apply Phase]
     APPLY --> MODELER[Odoo Modeler\nORM / Security]
@@ -1367,7 +1367,7 @@ MINOR (3):
 El Delegate Engine es el corazon operativo de iris. Toma una solicitud de tarea desde la herramienta MCP `delegate` y la ejecuta a traves de un pipeline de 8 pasos.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     A[Task Reception\nMCP Tool 'delegate'] --> B[Complexity Scoring\n4 dimensions → 0-100]
     B --> C[Adapter Selection\nScore maps to model tier]
@@ -1623,7 +1623,7 @@ Si el adaptador excede el presupuesto, `isOverBudget()` retorna `true` y la oper
 El Context Engine prepara el contexto necesario para que los sub-agentes ejecuten tareas de Odoo de manera efectiva. Opera en 4 etapas: deteccion de tipo de tarea, deteccion de skills, inyeccion de conocimiento, y construccion del preambulo Slim-MD.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     A[Task Instruction\n"Create a margin field in sale.order"]
     B[Task Type Detector\nodoo-selector.ts]
@@ -1880,7 +1880,7 @@ Paso 5: Prompt final construido
 El Quality Scanner es el sistema de evaluacion de calidad automatica para modulos Odoo. Analiza un modulo completo contra 10 dimensiones de calidad, genera un puntaje ponderado, y verifica contra CI Gates configurables.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     A[Module Path] --> B[Scan Module\nquality-scanner.ts]
     B --> C1[scanEstructural\n10% weight]
@@ -2254,7 +2254,7 @@ La arquitectura de seguridad sigue los principios establecidos en `docs/05-SECUR
 El modelo de seguridad de 7 capas organiza las defensas desde el nivel mas bajo (configuracion local) hasta el mas alto (supervision y respuesta). Cada capa tiene responsables, mecanismos, y metricas de exito definidos.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     subgraph L1 ["L1 - Config Security"]
         CONFIG[Config encryption\n0400 permissions\nEnv var sanitization]
@@ -2543,7 +2543,7 @@ function calculateBackoff(attempt: number): number {
 El Circuit Breaker protege a los adaptadores AI y servicios externos de sobrecarga cuando presentan fallos repetidos. Implementa una maquina de estados de 3 estados:
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 stateDiagram-v2
     [*] --> Closed
     Closed --> Open: 3 consecutive failures
@@ -2655,7 +2655,7 @@ interface BulkheadConfig {
 El sistema de health check verifica la conectividad y estado de todos los componentes criticos de iris mediante un pipeline de 6 pasos. Cada paso retorna un estado (ok, warning, error), la latencia de la verificacion, y detalles adicionales.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     START[Health Check Trigger] --> STEP1
     
@@ -2782,15 +2782,11 @@ gpg --encrypt --recipient admin@iris.dev backup/iris_*.dump
 
 ## 8. The 13 Engineering Disciplines
 
-iris se construye sobre 13 disciplinas de ingenieria que abarcan la totalidad del ciclo de vida del desarrollo de software Odoo: desde la arquitectura de sistemas hasta la gestion de costos. Cada disciplina representa un area de especializacion con principios, practicas, tools, y metricas definidas.
-
-Las disciplinas no son independientes: se complementan y refuerzan mutuamente. Por ejemplo, la disciplina de Agent Engineering depende de Prompt Engineering para definir las instrucciones de cada agente, y ambas dependen de Context Engineering para inyectar el conocimiento necesario.
+iris se construye sobre 13 disciplinas de ingenieria que cubren todo el ciclo de vida del desarrollo Odoo desde la arquitectura de sistemas hasta la gestion de costos. Cada disciplina tiene principios practicas herramientas y metricas propias pero ninguna trabaja sola se complementan y potencian entre si. Agent Engineering por ejemplo necesita de Prompt Engineering para definir las instrucciones de cada agente y ambas requieren Context Engineering para inyectar el conocimiento justo.
 
 ### 8.1 Systems Architecture Engineering
 
-La disciplina de Arquitectura de Sistemas define la estructura fundamental de iris: 17 capas organizadas en una jerarquia de abstraccion que va desde el transporte MCP hasta los modulos de dominio Odoo. Cada capa tiene responsabilidades especificas, interfaces bien definidas, y mecanismos de falla controlados.
-
-Los principios rectores incluyen diseno por capas (separation of concerns), aislamiento de componentes (cada capa se comunica solo con sus vecinas inmediatas), y contratos de interfaz estrictos (el protocolo MCP sirve como bus universal de comunicacion).
+La arquitectura de sistemas es el esqueleto de iris con 17 capas organizadas en jerarquia desde el transporte MCP hasta los modulos de dominio Odoo. Cada capa tiene responsabilidades claras interfaces definidas y mecanismos de falla controlados. Esta disciplina sigue los principios clasicos de separation of concerns donde cada capa solo se comunica con sus vecinas inmediatas y el protocolo MCP actua como bus universal de comunicacion. La norma ISO/IEEE 42010 define los estandares de descripcion arquitectonica que inspiran este enfoque y el SEI (Software Engineering Institute) de Carnegie Mellon ha documentado estos patrones por decadas en sus reportes tecnicos sobre arquitectura de software.
 
 - **Archivos clave**: `src/tools/delegate.ts` (orquestador), `src/server.ts` (MCP server), `docs/03-ARCHITECTURE.md`
 - **Patron principal**: Hexagonal Architecture + Screaming Architecture
@@ -2798,15 +2794,7 @@ Los principios rectores incluyen diseno por capas (separation of concerns), aisl
 
 ### 8.2 Prompt Engineering
 
-La disciplina de Ingenieria de Prompts define la estructura y contenido de las instrucciones que iris envia a los agentes AI. Comprende 3 familias de prompts:
-
-1. **8 SDD phase prompts**: una plantilla de prompt por cada fase del pipeline SDD (Explore, Propose, Spec, Design, Tasks, Apply, Verify, Archive). Cada plantilla incluye secciones de rol, contexto, reglas, tarea, y formato de salida.
-
-2. **9 Human-First Review prompts**: prompts estructurados para la revision de codigo por pares humanos, documentados en `docs/Human-First Review.md`.
-
-3. **5 Odoo domain prompts**: prompts especializados para dominios Odoo especificos (ORM, vistas, seguridad, reportes, controllers).
-
-Cada prompt sigue el patron de construction del Slim-MD Builder, que ensambla el prompt final concatenando bloques de contexto segun las necesidades de la tarea, respetando el presupuesto de contexto del 40%.
+La ingenieria de prompts define como iris estructura las instrucciones que envia a los agentes AI. Tiene 3 familias de prompts las 8 plantillas SDD una para cada fase del pipeline (Explore Propose Spec Design Tasks Apply Verify Archive) cada una con secciones de rol contexto reglas tarea y formato de salida. Luego estan los 9 prompts de Human-First Review para la revision de codigo entre pares humanos documentados en su propio archivo. Y finalmente 5 prompts especializados por dominio Odoo: ORM vistas seguridad reportes y controllers. Todos los prompts se ensamblan con el Slim-MD Builder que concatena bloques de contexto segun las necesidades de cada tarea y respeta el presupuesto maximo del 40%. Anthropic mantiene una guia oficial de prompt engineering en sus docs de Claude y OpenAI tiene la suya propia para GPT ambos son los referentes de esta disciplina.
 
 - **Archivos clave**: `src/context/slim-md.ts`, `docs/Human-First Review.md`
 - **Patron principal**: Role + Context + RULES + Task + Format
@@ -2814,16 +2802,7 @@ Cada prompt sigue el patron de construction del Slim-MD Builder, que ensambla el
 
 ### 8.3 Agent Engineering
 
-La disciplina de Ingenieria de Agentes define 7 agentes especializados Odoo organizados en el Onion Model de 4 capas:
-
-| Capa | Agentes | Activacion |
-|------|---------|------------|
-| Layer 1 - Core | Odoo Architect | Siempre activo |
-| Layer 2 - Development | Odoo Modeler, Odoo Viewer | Fases design, tasks, apply |
-| Layer 3 - Quality | Odoo Tester, Odoo Reviewer | Fases apply, verify |
-| Layer 4 - Operations | Odoo Ops, Odoo Observable | Bajo demanda |
-
-Cada agente tiene rol analogo a un puesto real en un equipo Odoo enterprise, skills que carga, quality gates que debe cumplir, modo de ensenanza estructurado, y personalidad definida.
+La ingenieria de agentes define 7 especialistas Odoo organizados en 4 capas del Onion Model. La capa Core tiene al Odoo Architect que siempre esta activo. La capa Development tiene al Odoo Modeler y al Odoo Viewer que se activan en las fases de design tasks y apply. La capa Quality tiene al Odoo Tester y al Odoo Reviewer que trabajan en apply y verify. Y la capa Operations tiene al Odoo Ops y al Odoo Observable que se invocan bajo demanda. Cada agente tiene un rol analogo a un puesto real en un equipo Odoo enterprise con skills especificas quality gates que cumplir un modo de enseñanza estructurado y una personalidad definida. LangChain publico un articulo fundamental sobre esta disciplina titulado Agent Engineering A New Discipline donde explica que combina data science ingenieria de software y diseño de experiencias. Anthropic tambien publico Building Effective AI Agents un PDF con patrones de implementacion. Simon Willison mantiene una guia viva de patrones de agentic engineering en su weblog. Y hay un catalogo de 18 patrones arquitectonicos para agentes publicado en ScienceDirect y arXiv.
 
 - **Archivos clave**: `AGENTS.md` (definiciones completas), `docs/01-PRD.md` Seccion 3
 - **Patron principal**: Reciprocal Apprenticeship (4 pilares: Executes, Teaches, Shows, Learns)
@@ -2831,12 +2810,7 @@ Cada agente tiene rol analogo a un puesto real en un equipo Odoo enterprise, ski
 
 ### 8.4 Context Engineering
 
-La disciplina de Ingenieria de Contexto gestiona la preparacion optima del contexto que reciben los sub-agentes AI. Opera bajo un presupuesto estricto del 40% del contexto disponible y abarca 4 componentes:
-
-1. **Task Type Detector**: clasifica la tarea en 22 tipos mediante 130+ keywords mapeadas a tipos de tarea Odoo
-2. **Skill Detector**: detecta hasta 8 skills mediante 5 tipos de disparadores con niveles de confianza (0.6 a 0.9)
-3. **Knowledge Injector**: carga archivos de conocimiento desde `knowledge/odoo/` segun el tipo de tarea (~120 archivos para v14-v19)
-4. **Slim-MD Preamble Builder**: construye el preambulo del sub-agente con informacion de mision, reglas, y contexto especifico de la tarea
+La ingenieria de contexto gestiona como se prepara el contexto que reciben los subagentes AI y opera con un presupuesto estricto del 40%. Tiene 4 componentes el Task Type Detector clasifica cada tarea en 22 tipos usando mas de 130 keywords mapeadas a tipos de tarea Odoo. El Skill Detector identifica hasta 8 skills relevantes usando 5 tipos de disparadores con niveles de confianza entre 0.6 y 0.9. El Knowledge Injector carga archivos de conocimiento desde knowledge/odoo segun el tipo de tarea son unos 120 archivos que cubren de v14 a v19. Y el Slim-MD Preamble Builder construye el preambulo del subagente con informacion de mision reglas y contexto especifico de la tarea. Anthropic publico un articulo llamado Effective Context Engineering for AI Agents donde explica que la ingenieria de contexto es la progresion natural de la ingenieria de prompts y describe las tecnicas de compaction structured note taking y token efficient tools. IBM tambien tiene su propio articulo What Is Context Engineering donde define la curacion de informacion para el context window como una disciplina independiente. LangChain y Elasticsearch Labs tienen guias completas que diferencian la ingenieria de contexto de la ingenieria de prompts.
 
 - **Archivos clave**: `src/context/odoo-selector.ts`, `src/context/context-detector.ts`, `src/context/rules.ts`, `src/context/slim-md.ts`
 - **Patron principal**: deteccion -> carga -> inyeccion -> construccion de preambulo
@@ -2844,9 +2818,7 @@ La disciplina de Ingenieria de Contexto gestiona la preparacion optima del conte
 
 ### 8.5 Spec Engineering
 
-La disciplina de Ingenieria de Especificaciones gestiona el pipeline SDD (Spec-Driven Development) de 8 fases. El nombre "Spec Engineering" refleja que las especificaciones son el artefacto central del cual derivan todas las decisiones tecnicas posteriores.
-
-Cada cambio (change) produce artefactos delta: especificaciones que describen solo lo que cambia respecto al estado actual del sistema. Los artefactos mantienen trazabilidad completa desde la propuesta inicial hasta el archivo final.
+La ingenieria de especificaciones gestiona el pipeline SDD de 8 fases donde las especificaciones son el artefacto central del que derivan todas las decisiones tecnicas. Cada cambio produce artefactos delta que describen solo lo que cambia respecto al estado actual del sistema y mantienen trazabilidad completa desde la propuesta inicial hasta el archivo final. Existe todo un movimiento alrededor de Spec Driven Development con SpecDriven.com como hub central. Microsoft publico un articulo llamado Spec Driven Development A Spec First Approach to AI Native Engineering donde presenta GitHub Spec Kit como toolkit oficial. Hay un paper en arXiv que define tres niveles de rigor en SDD: spec first spec anchored y spec as source. InfoQ tambien cubrio el tema en su articulo Spec Driven Development When Architecture Becomes Executable. Y Van Mahajan escribio sobre Spec Engineering y Harness Engineering como el futuro del desarrollo AI native.
 
 - **Artefactos**: Proposal, Spec, Design, Tasks, Apply Progress, Verify Report, Archive Report
 - **Archivos clave**: skills SDD (sdd-propose, sdd-spec, sdd-design, sdd-tasks, sdd-apply, sdd-verify, sdd-archive)
@@ -2855,15 +2827,7 @@ Cada cambio (change) produce artefactos delta: especificaciones que describen so
 
 ### 8.6 Delegate Engineering
 
-La disciplina de Ingenieria de Delegacion gestiona la interaccion con los 7 adaptadores AI externos. Su componente central es el Delegate Engine (`src/tools/delegate.ts`, 374 lineas), el archivo mas grande de iris.
-
-El flujo comprende:
-
-1. **Complexity Scoring**: evaluacion de la tarea en 4 dimensiones (Scope 30%, ContextSize 30%, ArchitecturalImpact 20%, DependencyResolution 20%) para determinar el nivel de complejidad (low/medium/high)
-2. **Adapter Selection**: mapeo de fase SDD + tipo de tarea al adaptador AI optimo (Claude, Gemini, Copilot, Codex, etc.)
-3. **Prompt Building**: construccion del prompt final con Slim-MD Builder
-4. **Two-Phase Commit**: Prepare (validacion, disponibilidad, presupuesto) + Commit (ejecucion) o Rollback (liberacion de recursos)
-5. **Budget Tracking**: registro del consumo de presupuesto por adaptador
+La ingenieria de delegacion gestiona como iris interactua con los 7 adaptadores AI externos. Su corazon es el Delegate Engine el archivo mas grande de todo iris con 374 lineas. El flujo completo tiene 5 pasos primero el Complexity Scoring evalua cada tarea en 4 dimensiones (Scope 30% ContextSize 30% ArchitecturalImpact 20% y DependencyResolution 20%) para determinar si la tarea es low medium o high. Luego el Adapter Selection mapea la fase SDD y el tipo de tarea al adaptador optimo entre Claude Gemini Copilot Codex y otros. Despues el Prompt Building construye el prompt final con el Slim MD Builder. El cuarto paso es el Two Phase Commit con una fase Prepare que valida disponibilidad y presupuesto y una fase Commit que ejecuta o hace Rollback liberando recursos. Finalmente el Budget Tracking registra el consumo de cada adaptador. Existe una herramienta llamada Delegate en GitHub que funciona como un engineering manager que corre equipos persistentes de agentes AI en tu maquina. Ceiba publico una guia para engineering managers sobre delegacion de agentes AI. Y hay un paper en arXiv llamado Intelligent AI Delegation que propone un framework adaptativo para la delegacion con transferencia de autoridad responsabilidad y confianza entre agentes.
 
 - **Archivos clave**: `src/tools/delegate.ts`, `src/router/classifier.ts`, `src/router/selector.ts`
 - **Patron principal**: Two-Phase Commit, 7 adapters, 4-dimension scoring
@@ -2871,13 +2835,7 @@ El flujo comprende:
 
 ### 8.7 Orchestration Engineering
 
-La disciplina de Ingenieria de Orquestacion coordina la secuencia de fases SDD, el protocolo de handoff entre agentes, y el seguimiento de estado a traves de Engram.
-
-Componentes clave:
-
-1. **Phase Sequencing**: grafo aciclico dirigido (DAG) de 8 fases SDD con dependencias explicitas entre artefactos
-2. **Agent Handoff Protocol**: al cambiar de fase, el agente saliente documenta el estado actual en Engram como learning artifact, y el agente entrante recupera el estado antes de comenzar
-3. **State Tracking**: el estado del pipeline SDD se persiste en Engram con el topic key `sdd/{change-name}/state`, permitiendo recuperacion tras perdida de contexto (compaction)
+La ingenieria de orquestacion coordina la secuencia de las fases SDD el protocolo de handoff entre agentes y el seguimiento de estado a traves de Engram. Tiene 3 componentes el Phase Sequencing es un grafo aciclico dirigido de 8 fases SDD con dependencias explicitas entre artefactos. El Agent Handoff Protocol dice que al cambiar de fase el agente saliente documenta el estado actual en Engram como learning artifact y el agente entrante recupera ese estado antes de empezar. El State Tracking persiste el estado del pipeline en Engram con topic key lo que permite recuperacion completa tras perdida de contexto por compaction. Microsoft Agent Framework incluye un patron de Handoff Orchestration donde declara los agentes participantes y las aristas dirigidas entre ellos. OpenAI tambien documenta los patrones de orquestacion y handoff en sus API docs para agents. Tian Pan escribio un analisis profundo sobre por que los sistemas multiagente se rompen en las transiciones y como diseñar handoffs confiables y Peppereffect publico una guia sobre protocolos de handoff con metricas de reduccion de fallos del 20 al 40 por ciento.
 
 - **Archivos clave**: `AGENTS.md` Seccion 5 (Agent-to-SDD Phase Mapping)
 - **Patron principal**: 8-phase DAG, handoff explicito, estado persistente
@@ -2885,27 +2843,7 @@ Componentes clave:
 
 ### 8.8 Observability Engineering
 
-La disciplina de Ingenieria de Observabilidad proporciona visibilidad completa del comportamiento del sistema en produccion y desarrollo mediante telemetria estructurada.
-
-La implementacion utiliza **OpenTelemetry** (OTLP) con exportacion a Grafana Cloud. El modulo `alesco_observability` en Odoo instrumenta los componentes del sistema:
-
-- **HTTP tracing**: seguimiento de requests a endpoints del bridge con medicion de latencia, codigos de estado, y parametros
-- **ORM tracing**: seguimiento de operaciones de base de datos (search, create, write, unlink) con deteccion de N+1
-- **RPC tracing**: seguimiento de llamadas a metodos remotos con contextos de usuario y parametros
-- **Span analysis**: desglose de tiempos por componente para identificar cuellos de botella
-
-```typescript
-// Ejemplo de span OTel (alesco_observability)
-const span = tracer.startSpan('orm.search', {
-  attributes: {
-    'db.model': 'sale.order',
-    'db.domain': JSON.stringify(domain),
-    'db.limit': limit,
-  },
-})
-```
-
-> Importante: iris utiliza exclusivamente `opentelemetry-distro-odoo` (gratis, Apache-2.0). No se utiliza `dkn_otel` (pago, $24.99/mes, OPL-1) ni `az_opentelemetry` (pago).
+La ingenieria de observabilidad da visibilidad completa del comportamiento del sistema en produccion y desarrollo mediante telemetria estructurada con OpenTelemetry. El modulo alesco_observability instrumenta los componentes con HTTP tracing para seguir requests a endpoints del bridge midiendo latencia codigos de estado y parametros. ORM tracing para operaciones de base de datos como search create write y unlink con deteccion de N+1. RPC tracing para llamadas a metodos remotos con contexto de usuario y Span analysis para desglosar tiempos por componente e identificar cuellos de botella. La instrumentacion se exporta via OTLP a Grafana Cloud. Es importante notar que iris usa exclusivamente opentelemetry distro odoo que es gratis con licencia Apache 2.0 y nunca usa dkn_otel que cuesta 24.99 dolares al mes ni az_opentelemetry que tambien es pago. El libro de Google Site Reliability Engineering es la referencia fundacional de esta disciplina y OpenTelemetry es el estandar abierto que adoptamos para tracing metrics y logs.
 
 - **Archivos clave**: `alesco_observability/`, `docs/02-ADR.md` ADR-005
 - **Patron principal**: OpenTelemetry, OTLP export, Grafana dashboards
@@ -2913,7 +2851,7 @@ const span = tracer.startSpan('orm.search', {
 
 ### 8.9 Quality Engineering
 
-La disciplina de Ingenieria de Calidad gestiona el sistema automatizado de 10 dimensiones que evalua la calidad del codigo Odoo generado. El Quality Scanner es el componente central que implementa esta disciplina.
+La ingenieria de calidad gestiona el sistema automatizado de 10 dimensiones que evalua el codigo Odoo generado con el Quality Scanner como componente central. Las 10 dimensiones son Estructural con peso 15% y minimo 70% que evalua estructura de modulos y naming. Manifest con 10% y minimo 70% que revisa el __manifest__.py completo. Modelos y ORM con 15% y minimo 60% para correccion ORM y depends. Vistas y UX con 10% y minimo 60% para vistas XML y widgets. Seguridad con 15% y minimo 80% para ACL record rules y sudo. Tests con 10% y minimo 50% para cobertura. i18n con 5% y minimo 40% para traducciones. Performance con 10% y minimo 50% para deteccion de N+1 e indices. Documentacion con 5% y minimo 40%. Y Mantenibilidad con 5% y minimo 40% para complejidad ciclomatica. La formula de scoring suma cada peso por su score y resta penalizaciones. Hay 4 CI Gates: pre commit requiere 70 y bloquea en 50, PR requiere 80, merge requiere 85 y deploy requiere 90. Quality Engineering es una disciplina consolidada con años de practica respaldada por ISTQB la IEEE y el Google Testing Blog entre otros.
 
 **10 dimensiones de calidad:**
 
@@ -2944,14 +2882,7 @@ const SCORE = sum(peso_i * score_i) - penalizaciones
 
 ### 8.10 Reliability Engineering
 
-La disciplina de Ingenieria de Confiabilidad garantiza la disponibilidad del sistema mediante 6 mecanismos complementarios detallados en la Seccion 7 de este documento:
-
-1. **Timeouts**: 8 componentes con timeouts explicitos (15s a 120s)
-2. **Retry with Exponential Backoff**: 3 intentos, 1s/2s/4s + jitter 25%
-3. **Circuit Breaker**: 3 estados (Closed/Open/Half-Open), 5 min de espera
-4. **Fallback Strategies**: modo degradado, degradacion gradual, fail-fast
-5. **Bulkhead Pattern**: semaforo de 2 concurrentes, cola de 10, timeout de 30s
-6. **Health Check System**: 6-step verification pipeline
+La ingenieria de confiabilidad mantiene el sistema disponible con 6 mecanismos que se complementan entre si. Timeouts configura 8 componentes con tiempos explicitos de 15 a 120 segundos. Retry with Exponential Backoff hace 3 intentos con esperas de 1 2 y 4 segundos mas un jitter del 25% para evitar tormentas de reintentos. Circuit Breaker tiene 3 estados (Closed Open y Half Open) con 5 minutos de espera antes de reintentar. Fallback Strategies implementa modo degradado degradacion gradual y fail fast segun el escenario. Bulkhead Pattern usa un semaforo de 2 conexiones concurrentes con cola de 10 y timeout de 30 segundos para aislar recursos. Y Health Check System tiene un pipeline de verificacion de 6 pasos. El libro de Google Site Reliability Engineering de Betsy Beyer y el equipo de Google es la biblia de esta disciplina y las conferencias USENIX SREcon son el punto de encuentro anual de la comunidad.
 
 - **Archivos clave**: `src/router/circuit-breaker.ts`, `src/router/bulkhead.ts`, `src/config/timeouts.ts`
 - **Patron principal**: 6 mecanismos, DR scenarios, 3-2-1 backup
@@ -2959,17 +2890,7 @@ La disciplina de Ingenieria de Confiabilidad garantiza la disponibilidad del sis
 
 ### 8.11 Memory Engineering
 
-La disciplina de Ingenieria de Memoria gestiona la persistencia de conocimiento a traves de Engram, el sistema de memoria persistente de iris. Permite que el sistema recuerde decisiones, aprendizajes, y contexto entre sesiones.
-
-**Componentes clave:**
-
-1. **Topic Key System**: sistema de versionado de artefactos mediante topic keys estables (formato: `sdd/{change-name}/{artifact-type}`). Cada upsert a una topic key actualiza la observacion mas reciente, manteniendo el historial de versiones.
-
-2. **Conflict Resolution**: sistema de juicio semantico (mem_judge) que detecta y resuelve conflictos entre observaciones mediante relaciones (related, compatible, scoped, conflicts_with, supersedes, not_conflict).
-
-3. **2-Step Recovery Protocol**: las sesiones futuras recuperan artefactos mediante busqueda semantica (mem_search) seguida de recuperacion completa (mem_get_observation). Esto evita la truncacion de resultados.
-
-4. **Cross-session State**: el estado del pipeline SDD se persiste en Engram y se recupera tras perdida de contexto por compaction.
+La ingenieria de memoria gestiona como Engram persiste el conocimiento entre sesiones para que iris recuerde decisiones aprendizajes y contexto sin importar cuantas veces se cierre la ventana. Tiene 4 componentes clave el Topic Key System versiona artefactos con topic keys estables en formato sdd/{change-name}/{artifact-type} y cada upsert actualiza la observacion mas reciente manteniendo el historial de versiones. El Conflict Resolution usa el sistema de juicio semantico mem_judge para detectar y resolver conflictos entre observaciones usando 6 tipos de relacion: related compatible scoped conflicts_with supersedes y not_conflict. El 2 Step Recovery Protocol dice que las sesiones futuras recuperan artefactos con mem_search primero y luego mem_get_observation para completar la lectura sin truncacion. Y el Cross session State persiste el estado del pipeline SDD en Engram para recuperarlo tras perdida de contexto por compaction. Hay varios papers en arXiv que exploran esto desde distintos angulos Continuum Memory Architectures propone que la memoria debe persistir mutar y consolidarse como un sustrato en evolucion. Engineering Agent Memory de Ken Alger argumenta que la memoria de agentes no es una feature sino una disciplina de ingenieria. Otro paper pregunta Is Agent Memory a Database y propone Governed Evolving Memory como nueva abstraccion. Y Oracle tiene un repositorio completo de ejemplos sobre memoria contextual para agentes en su AI Developer Hub.
 
 - **Archivos clave**: `src/engram/client.ts`, skills de engram
 - **Patron principal**: topic key upsert, semantic judgment, 2-step recovery
@@ -2977,20 +2898,7 @@ La disciplina de Ingenieria de Memoria gestiona la persistencia de conocimiento 
 
 ### 8.12 Code Intelligence Engineering
 
-La disciplina de Ingenieria de Inteligencia de Codigo gestiona el analisis estatico de codigo mediante CodeGraph, el sistema de grafos de codigo de iris. Proporciona 10 herramientas de consulta:
-
-1. **search**: busqueda semantica en el grafo de codigo
-2. **trace**: seguimiento de flujo de ejecucion desde entrada a salida
-3. **context**: contexto de un nodo especifico (definicion, usos, referencias)
-4. **explore**: exploracion del grafo por tipo de nodo (modelos, vistas, etc.)
-5. **node**: informacion detallada de un nodo individual
-6. **files**: listado de archivos en el modulo
-7. **status**: estado actual del indice de CodeGraph
-8. **callers**: funciones que llaman a una funcion dada
-9. **callees**: funciones llamadas por una funcion dada
-10. **impact**: analisis de impacto de cambios (que se rompe si modifico X)
-
-Adicionalmente, el **UI Map Engine** parsea archivos XML de vistas Odoo y Python de modelos para construir un mapa de la interfaz de usuario que permite a los agentes comprender la estructura visual sin acceso a la UI.
+La ingenieria de inteligencia de codigo gestiona el analisis estatico mediante CodeGraph el sistema de grafos de codigo de iris. Ofrece 10 herramientas search para busqueda semantica trace para seguimiento de flujo de ejecucion context para el contexto de un nodo explore para explorar el grafo por tipo de nodo node para informacion detallada files para listar archivos status para el estado del indice callers para ver que funciones llaman a una dada callees para ver que funciones llama y impact para analizar que se rompe si modificas algo. Ademas el UI Map Engine parsea archivos XML de vistas Odoo y Python de modelos para construir un mapa de la interfaz de usuario que los agentes usan para entender la estructura visual sin acceso a la UI. CodeIntelligently tiene un blog que define code intelligence como la practica sistematica de analizar codigo fuente historial de versiones comportamiento del equipo y patrones arquitectonicos. Zylos Research publico un analisis de 2026 sobre codebase intelligence donde compara los enfoques index first agentic search e hybrid graph augmented. Andrey Kumanyaev escribio sobre code knowledge graphs para LLM agents explicando porque el grafo da respuestas deterministicas mientras la busqueda de texto da solo probabilidades. Y hay un survey completo en arXiv sobre deep learning for code intelligence con taxonomia de representaciones tecnicas y aplicaciones.
 
 - **Archivos clave**: `src/codegraph/client.ts`, skills de CodeGraph
 - **Patron principal**: grafo de codigo, 10 tools, UI Map Engine
@@ -2998,37 +2906,7 @@ Adicionalmente, el **UI Map Engine** parsea archivos XML de vistas Odoo y Python
 
 ### 8.13 Cost Engineering
 
-La disciplina de Ingenieria de Costos garantiza que iris opere con costo cero recurrente ($0/mes), siguiendo la regla maestra R0 (Zero Cost). Todos los servicios utilizados tienen tier gratuito o son open-source.
-
-**Estructura de costos:**
-
-| Componente | Costo | Modelo |
-|-----------|-------|--------|
-| OpenTelemetry (opentelemetry-distro-odoo) | $0 | Open source, Apache-2.0 |
-| Grafana Cloud | $0 | Tier gratuito (14 dias retencion) |
-| Odoo.sh | $0 | Incluido en suscripcion Enterprise |
-| AI Adapters (Claude, Gemini, etc.) | $0 | Suscripciones existentes del usuario |
-| Engram | $0 | MCP local, sin costo |
-| CodeGraph | $0 | Indice local, sin costo |
-| GitHub Actions | $0 | Tier gratuito (2000 min/mes) |
-
-**Budget tracking:**
-
-Cada adaptador AI tiene un presupuesto diario configurable ($0.50 a $5.00/dia por defecto). El sistema registra el consumo por sesion y por tarea, y emite alertas al alcanzar el 80% del presupuesto diario.
-
-**Configuracion de presupuestos por adaptador:**
-
-```typescript
-const BUDGET_LIMITS = {
-  claude:    { daily: 5.00, alert: 0.80 },
-  antigravity: { daily: 3.00, alert: 0.80 },
-  copilot:  { daily: 2.00, alert: 0.80 },
-  codex:    { daily: 1.00, alert: 0.80 },
-  kilo:     { daily: 0.50, alert: 0.80 },
-  cursor:   { daily: 0.50, alert: 0.80 },
-  opencode: { daily: 0.50, alert: 0.80 },
-}
-```
+La ingenieria de costos garantiza que iris opere con costo cero recurrente siguiendo la regla maestra R0 de Zero Cost. Todos los servicios tienen tier gratuito o son open source. OpenTelemetry con opentelemetry distro odoo cuesta cero por ser Apache 2.0. Grafana Cloud en su tier gratuito da 14 dias de retencion sin cobro. Odoo.sh ya esta incluido en la suscripcion Enterprise. Los adaptadores AI como Claude Gemini y Copilot usan suscripciones existentes del usuario. Engram y CodeGraph son indices locales MCP sin costo. Y GitHub Actions da 2000 minutos gratis al mes. Esta disciplina esta directamente conectada con AI FinOps que TechTarget define como la aplicacion de FinOps para optimizar costos de agentic AI. Alephant publico una guia definitiva de AI FinOps 2026 con los pilares de visibilidad optimizacion gobierno y economia unitaria. La FinOps Foundation tiene un grupo de trabajo dedicado a AI for FinOps. Y AWS acaba de lanzar FinOps Agent en preview publica para investigar anomalias de costo automaticamente. iris ademas tiene budget tracking por adaptador con alertas al 80% del presupuesto diario que va de 0.50 a 5.00 dolares segun el adaptador.
 
 - **Archivos clave**: `src/context/budget.ts`, SQLite budget store
 - **Patron principal**: zero-cost, per-adapter budgets, automated alerts
@@ -3278,7 +3156,7 @@ Cuando el desarrollador corrige o complementa la informacion de un learning arti
 La progresion de aprendizaje sigue el mismo Onion Model de los agentes: el desarrollador comienza en el nucleo (Core Odoo) y progresa hacia las capas externas a medida que domina cada nivel.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#22d3ee', 'lineColor': '#8b949e'}}}%%
+%%{init: {'theme': 'dark'}}%%
 flowchart TD
     subgraph L1 ["Layer 1 - Core (siempre activo)"]
         ARCH[Odoo Architect\nRazonamiento arquitectonico\nDecisiones estructurales]

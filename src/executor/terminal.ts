@@ -52,8 +52,7 @@ export async function runInTerminal(
 
   const previousModel = swapModel(model)
 
-  // -EncodedCommand (Base64 UTF-16LE): wt treats ';' as tab separator, so we can't
-  // use -Command with semicolons. Encoding hides all special chars from wt.
+  // -EncodedCommand (Base64 UTF-16LE): hides semicolons and special chars from cmd/shell parsing
   const psScript = [
     `& '${AGY_BIN}' '--print' '${instruction}' '--dangerously-skip-permissions' '--print-timeout' '15m0s'`,
     `Write-Host ''`,
@@ -64,13 +63,18 @@ export async function runInTerminal(
 
   const start = Date.now()
 
-  await execa('wt', [
-    'new-tab', '--',
-    'powershell', '-EncodedCommand', encoded,
-  ], { reject: false })
+  try {
+    await execa('cmd', ['/c', 'start', 'powershell', '-EncodedCommand', encoded])
+  } catch {
+    await execa('wt', ['new-tab', '--', 'powershell', '-EncodedCommand', encoded], { reject: false })
+  }
 
   // Poll Engram for completion signal — agy writes to iris/task/{taskId}/status when done
-  const output = await waitForEngramCompletion(taskId, timeoutMs)
-  restoreModel(previousModel)
-  return { output, durationMs: Date.now() - start }
+  // try/finally guarantees restoreModel even on timeout
+  try {
+    const output = await waitForEngramCompletion(taskId, timeoutMs)
+    return { output, durationMs: Date.now() - start }
+  } finally {
+    restoreModel(previousModel)
+  }
 }

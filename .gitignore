@@ -9,3 +9,9 @@ db/
 iris.local.yaml
 docs/sdd/
 iris-setup.exe
+iris.exe
+iris-pkg.exe
+iris.old.exe
+.bun-build*/
+nul
+SYSTEM-GUIDE.md
