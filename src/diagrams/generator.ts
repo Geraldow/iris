@@ -3,9 +3,14 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { AntigravityAdapter } from '../adapters/antigravity.js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PACKAGE_ROOT = join(__dirname, '../../')
+function getPackageRoot(): string {
+  try {
+    return join(fileURLToPath(import.meta.url), '..', '..', '..')
+  } catch {
+    return dirname(process.execPath)
+  }
+}
+const PACKAGE_ROOT = getPackageRoot()
 const KNOWLEDGE_EXCALIDRAW = join(PACKAGE_ROOT, 'knowledge', 'excalidraw')
 
 export type DiagramTemplate = 'odoo-erd' | 'odoo-owl-flow' | 'sdd-architecture' | 'odoo-deployment'

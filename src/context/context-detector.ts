@@ -2,9 +2,14 @@ import type { SkillRequirement, Phase } from '../types/index.js'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PACKAGE_ROOT = join(__dirname, '../../')
+function getPackageRoot(): string {
+  try {
+    return join(fileURLToPath(import.meta.url), '..', '..')
+  } catch {
+    return dirname(process.execPath)
+  }
+}
+const PACKAGE_ROOT = getPackageRoot()
 
 interface SkillDef {
   name: string

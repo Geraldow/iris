@@ -29,9 +29,22 @@ import { injectKnowledgeContext } from '../context/rules.js'
 import { generateDiagram } from '../diagrams/generator.js'
 import type { IAdapter, AdapterName, OdooTaskType, DelegateRequest, DelegateResult, PendingPlan } from '../types/index.js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PACKAGE_ROOT = join(__dirname, '../../')
+function extractAgyOutput(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw.trim())
+    if (parsed && typeof parsed.result === 'string') return parsed.result
+  } catch { /* not JSON — return raw */ }
+  return raw
+}
+
+function getPackageRoot(): string {
+  try {
+    return join(fileURLToPath(import.meta.url), '..', '..')
+  } catch {
+    return dirname(process.execPath)
+  }
+}
+const PACKAGE_ROOT = getPackageRoot()
 // Resolved relative to src/tools/delegate.ts → ../../ = package root → prompts/
 const PROMPTS_DIR = join(PACKAGE_ROOT, 'prompts')
 
@@ -299,7 +312,7 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
       model: plan.model,
       effort: plan.effort,
       complexity: plan.complexity,
-      status: 'done' as const,
+      status: 'running' as const,
       summary: `Running in background. Check status with iris_task("${task.id}")`,
     }
   }
@@ -311,7 +324,7 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
       const obsId = await saveTaskPrompt(task.id, plan.prompt)
       if (!obsId) throw new Error('Failed to save task prompt to Engram')
       const result = await runInTerminal(task.id, obsId, plan.model, 16 * 60 * 1000)
-      output = result.output
+      output = extractAgyOutput(result.output)
     } else {
       const result = await runSubprocess(adapter, plan.prompt, plan.model, plan.effort)
       output = result.output

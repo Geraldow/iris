@@ -1,9 +1,5 @@
-import { readFileSync } from 'fs'
-import { join } from 'path'
-import { fileURLToPath } from 'url'
 import pkgJson from '../package.json' with { type: 'json' }
 
-const PACKAGE_ROOT = join(fileURLToPath(import.meta.url), '..', '..')
 const REPO = 'Geraldow/iris'
 const CACHE_TTL_MS = 60 * 60 * 1000
 

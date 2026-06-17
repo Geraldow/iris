@@ -5,12 +5,7 @@ import { closeDb } from './store/db.js'
 import { closeEngramClient } from './engram/client.js'
 import { closeCodeGraphClient } from './codegraph/client.js'
 // closeCodeGraphClient kept for graceful shutdown in case cgClient is used in future flows
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 import pkgJson from '../package.json' with { type: 'json' }
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 // CLI interface — show help when run interactively (not piped by MCP client)
 {

@@ -4,9 +4,14 @@ import { fileURLToPath } from 'url'
 import type { OdooRule, OdooTaskType } from '../types/index.js'
 import { TASK_CONFIG } from './odoo-selector.js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-export const KNOWLEDGE_ROOT = join(__dirname, '../../knowledge/odoo')
+function getKnowledgeRoot(): string {
+  try {
+    return join(fileURLToPath(import.meta.url), '..', '..', '..', 'knowledge', 'odoo')
+  } catch {
+    return join(dirname(process.execPath), 'knowledge', 'odoo')
+  }
+}
+export const KNOWLEDGE_ROOT = getKnowledgeRoot()
 const RULES_PATH = join(KNOWLEDGE_ROOT, 'ai/RULES.md')
 
 let _rules: OdooRule[] | null = null

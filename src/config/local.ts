@@ -4,9 +4,14 @@ import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
 import type { IrisLocalConfig } from '../types/index.js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PACKAGE_ROOT = join(__dirname, '../../')
+function getPackageRoot(): string {
+  try {
+    return join(fileURLToPath(import.meta.url), '..', '..')
+  } catch {
+    return dirname(process.execPath)
+  }
+}
+const PACKAGE_ROOT = getPackageRoot()
 const LOCAL_YAML_PATH = join(PACKAGE_ROOT, 'iris.local.yaml')
 const DETECT_SCRIPT = join(PACKAGE_ROOT, 'scripts/detect-alesco-path.ps1')
 

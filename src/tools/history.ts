@@ -10,5 +10,6 @@ export const HistoryInputSchema = z.object({
 export async function handleHistory(input: unknown): Promise<object> {
   const { limit, phase, adapter } = HistoryInputSchema.parse(input)
   const tasks = listTasks({ limit: limit ?? 20, phase, adapter })
+    .map(({ prompt: _omit, ...task }) => task)
   return { tasks, count: tasks.length }
 }
