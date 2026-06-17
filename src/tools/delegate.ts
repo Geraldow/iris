@@ -295,10 +295,10 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
       runInTerminal(task.id, obsId, plan.model, 16 * 60 * 1000)
         .then(result => saveResult({
           taskId: task.id, phase: req.phase, adapter: adapterName,
-          change: req.change, project: 'iris', content: result.output,
+          change: req.change, project: 'iris', content: extractAgyOutput(result.output),
         }).then(engramId => {
           recordSuccess(adapterName)
-          completeTask(task.id, result.output, engramId)
+          completeTask(task.id, extractAgyOutput(result.output), engramId)
         }))
         .catch(err => {
           recordFailure(adapterName)
