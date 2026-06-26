@@ -154,7 +154,7 @@ export const TASK_CONFIG: Record<OdooTaskType, TaskConfig> = {
   'odoo-debug':      { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/RULES.md'],                                            activeRules: ['R1'] },
   'odoo-ops':        { primaryProvider: 'claude',       fallbackProvider: 'copilot',     knowledgeFiles: ['contribute/plugins/odoo-ops/SKILL.md'],                   activeRules: ['R2','R3'] },
   'odoo-ci':         { primaryProvider: 'claude',       fallbackProvider: 'copilot',     knowledgeFiles: ['contribute/plugins/odoo-ci/SKILL.md'],                    activeRules: ['R9'] },
-  'odoo-api':        { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/controllers.md'],                   activeRules: ['R13'] },
+  'odoo-api':        { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/external-api.md'],                  activeRules: ['R13'] },
   'odoo-commit':     { primaryProvider: 'claude',       fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-commit/SKILL.md'],                activeRules: ['R3','R9'] },
   'odoo-pr':         { primaryProvider: 'claude',       fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-pr/SKILL.md'],                    activeRules: ['R3','R9'] },
   'odoo-changelog':  { primaryProvider: 'claude',       fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-changelog/SKILL.md'],             activeRules: ['R9'] },
