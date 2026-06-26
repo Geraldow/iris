@@ -1,21 +1,20 @@
 import { execa } from 'execa'
 import { execSync } from 'child_process'
-import { BaseAdapter } from './base.js'
-import type { AdapterName } from '../types/index.js'
+import { BaseProvider } from './base.js'
+import type { ProviderName } from '../types/index.js'
 
-// Only OpenCode Zen models are supported (no OpenRouter authentication)
-const ZEN_DEFAULT = 'opencode/zen'
-const ZEN_PREFIX = 'opencode/'
+const PRIMARY_MODEL = 'opencode/big-pickle'
+const FALLBACK_MODEL = 'opencode/deepseek-v4-flash-free'
 
 function resolveModel(model: string): string {
-  if (model.startsWith('openrouter/') || !model.startsWith(ZEN_PREFIX)) {
-    return ZEN_DEFAULT
+  if (model.startsWith('opencode/') || model.startsWith('openrouter/')) {
+    return model
   }
-  return model
+  return PRIMARY_MODEL
 }
 
-export class OpenCodeAdapter extends BaseAdapter {
-  name: AdapterName = 'opencode'
+export class OpenCodeProvider extends BaseProvider {
+  name: ProviderName = 'opencode'
 
   isAvailable(): boolean {
     try {

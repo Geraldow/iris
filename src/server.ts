@@ -17,7 +17,7 @@ export function registerTools(server: McpServer): void {
   // iris_delegate — core orchestration tool
   server.tool(
     'delegate',
-    'Delegate a task to the best AI adapter based on phase and complexity',
+    'Delegate a task to the best AI provider based on phase and complexity',
     DelegateInputSchema.shape,
     async (input) => {
       const result = await handleDelegate(input)
@@ -28,7 +28,7 @@ export function registerTools(server: McpServer): void {
   // iris_status — health + budget overview
   server.tool(
     'status',
-    'Get status of all adapters including circuit breaker state and daily budget',
+    'Get status of all providers including circuit breaker state and daily budget',
     {},
     async () => {
       const result = await handleStatus({})
@@ -69,11 +69,11 @@ export function registerTools(server: McpServer): void {
     },
   )
 
-  // iris_setup — verify and configure Engram per adapter
+  // iris_setup — verify and configure Engram per provider
   server.tool(
     'setup',
-    'Verify and auto-configure Engram MCP for a given adapter',
-    { adapter: z.string() },
+    'Verify and auto-configure Engram MCP for a given provider',
+    { provider: z.string() },
     async (input) => {
       const result = await handleSetup(input)
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }

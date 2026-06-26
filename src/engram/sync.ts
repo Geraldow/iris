@@ -38,16 +38,19 @@ export async function waitForEngramCompletion(taskId: string, timeoutMs: number)
 export interface SaveResultOptions {
   taskId: string
   phase: string
-  adapter: string
+  provider: string
   change?: string
   project?: string
   content: string
+  // Legacy alias
+  adapter?: string
 }
 
 export async function saveResult(opts: SaveResultOptions): Promise<number | undefined> {
   try {
     const client = await getEngramClient()
-    const topicKey = `iris/${opts.project ?? 'default'}/${opts.change ?? opts.taskId}/${opts.phase}/${opts.adapter}`
+    const providerName = opts.provider ?? opts.adapter ?? 'unknown'
+    const topicKey = `iris/${opts.project ?? 'default'}/${opts.change ?? opts.taskId}/${opts.phase}/${providerName}`
 
     const result = await client.callTool({
       name: 'mem_save',

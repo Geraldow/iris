@@ -2,8 +2,8 @@ import { execa } from 'execa'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
-import { BaseAdapter } from './base.js'
-import type { AdapterName } from '../types/index.js'
+import { BaseProvider } from './base.js'
+import type { ProviderName } from '../types/index.js'
 
 // Full path required — agy is not on PowerShell PATH (only CMD PATH)
 const AGY_BIN = join(
@@ -18,8 +18,8 @@ interface AntigravitySettings {
   [key: string]: unknown
 }
 
-export class AntigravityAdapter extends BaseAdapter {
-  name: AdapterName = 'antigravity'
+export class AntigravityProvider extends BaseProvider {
+  name: ProviderName = 'antigravity'
 
   isAvailable(): boolean {
     // agy has a hardcoded full path — check if the binary file exists

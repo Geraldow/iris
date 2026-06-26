@@ -6,11 +6,11 @@ import { getAllBudgets } from '../store/budgets.js'
 import { getAllStatuses } from '../router/circuit-breaker.js'
 import { getConfig } from '../config.js'
 import { getEngramClient } from '../engram/client.js'
-import type { AdapterName } from '../types/index.js'
+import type { ProviderName } from '../types/index.js'
 import { checkForUpdates } from '../updater.js'
 
-// Known adapter binaries and their commands for availability checking
-const ADAPTER_BINARIES: Record<string, { checkCmd: string; installGuide: string }> = {
+// Known provider binaries and their commands for availability checking
+const PROVIDER_BINARIES: Record<string, { checkCmd: string; installGuide: string }> = {
   claude:      { checkCmd: 'claude --version', installGuide: 'npm install -g @anthropic-ai/claude-code' },
   antigravity: { checkCmd: 'agy --version', installGuide: 'winget install agy' },
   copilot:     { checkCmd: 'github-copilot-cli --version', installGuide: 'npm install -g @githubnext/github-copilot-cli' },
@@ -26,18 +26,18 @@ export async function handleStatus(_input: unknown): Promise<object> {
   const budgets = getAllBudgets()
   const circuitBreakers = getAllStatuses()
 
-  const adapters = (Object.keys(config.adapters) as AdapterName[]).map(name => ({
+  const providers = (Object.keys(config.providers) as ProviderName[]).map(name => ({
     name,
-    enabled: config.adapters[name].enabled,
+    enabled: config.providers[name].enabled,
     circuit: circuitBreakers[name],
-    budget: budgets.find(b => b.adapter === name),
+    budget: budgets.find(b => b.provider === name),
   }))
 
   const update = await checkForUpdates()
 
   return {
     confirm_threshold: config.confirm_threshold,
-    adapters,
+    providers,
     version: update.current,
     update_available: update.available,
     ...(update.available && {
@@ -48,22 +48,23 @@ export async function handleStatus(_input: unknown): Promise<object> {
 }
 
 export async function handleSetup(input: unknown): Promise<object> {
-  const { adapter } = input as { adapter: string }
+  const params = input as { adapter?: string; provider?: string }
+  const providerName = params.provider ?? params.adapter ?? ''
   const config = getConfig()
 
-  // 1. Validate adapter name
-  const validAdapters = Object.keys(config.adapters)
-  if (!validAdapters.includes(adapter)) {
+  // 1. Validate provider name
+  const validProviders = Object.keys(config.providers)
+  if (!validProviders.includes(providerName)) {
     return {
-      adapter,
+      provider: providerName,
       known: false,
-      error: `Unknown adapter '${adapter}'. Valid: ${validAdapters.join(', ')}`,
+      error: `Unknown provider '${providerName}'. Valid: ${validProviders.join(', ')}`,
       status: 'error',
     }
   }
 
-  const adapterConfig = config.adapters[adapter as AdapterName]
-  const binInfo = ADAPTER_BINARIES[adapter]
+  const providerConfig = config.providers[providerName as ProviderName]
+  const binInfo = PROVIDER_BINARIES[providerName]
 
   // 2. Binary availability check
   let binaryFound = false
@@ -82,9 +83,9 @@ export async function handleSetup(input: unknown): Promise<object> {
 
     // Fallback: try where/which in case --version failed but binary exists
     if (!binaryFound) {
-      try {
-        const cmd = process.platform === 'win32' ? 'where' : 'which'
-        const result = execSync(`${cmd} ${adapter}`, { encoding: 'utf-8', timeout: 3000 })
+    try {
+      const cmd = process.platform === 'win32' ? 'where' : 'which'
+      const result = execSync(`${cmd} ${providerName}`, { encoding: 'utf-8', timeout: 3000 })
         binaryPath = result.trim().split('\n')[0]
         binaryFound = true
       } catch {
@@ -108,16 +109,16 @@ export async function handleSetup(input: unknown): Promise<object> {
     engramError = e instanceof Error ? e.message : String(e)
   }
 
-  // 4. Adapter config status
-  const enabled = adapterConfig?.enabled ?? false
-  const priority = adapterConfig?.priority ?? 0
-  const dailyBudget = adapterConfig?.daily_budget_usd ?? 0
+  // 4. Provider config status
+  const enabled = providerConfig?.enabled ?? false
+  const priority = providerConfig?.priority ?? 0
+  const dailyBudget = providerConfig?.daily_budget_usd ?? 0
 
   // 5. Overall health
   const healthy = binaryFound && engramReachable && enabled
 
   return {
-    adapter,
+    provider: providerName,
     known: true,
     enabled,
     configured: {
@@ -135,7 +136,7 @@ export async function handleSetup(input: unknown): Promise<object> {
       ...(engramError && { error: engramError }),
     },
     status: healthy ? 'ok' : 'degraded',
-    ...(!binaryFound && { warnings: [`${adapter} CLI not found in PATH`] }),
+    ...(!binaryFound && { warnings: [`${providerName} CLI not found in PATH`] }),
     ...(!engramReachable && { warnings: [...(engramError ? [`Engram MCP unreachable: ${engramError}`] : ['Engram MCP unreachable'])] }),
   }
 }

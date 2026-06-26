@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { AntigravityAdapter } from '../adapters/antigravity.js'
+import { AntigravityProvider } from '../providers/antigravity.js'
 
 function getPackageRoot(): string {
   try {
@@ -75,8 +75,8 @@ export async function generateDiagram(opts: DiagramOptions): Promise<DiagramResu
     opts.changeName ? `- Change name: ${opts.changeName}` : '',
   ].filter(l => l !== undefined).join('\n')
 
-  const adapter = new AntigravityAdapter()
-  const raw = await adapter.execute(prompt, 'Gemini 2.5 Flash (Medium)', 'n/a')
+  const provider = new AntigravityProvider()
+  const raw = await provider.execute(prompt, 'Gemini 2.5 Flash (Medium)', 'n/a')
 
   // Extract JSON from response (strip markdown fences if present)
   const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? null

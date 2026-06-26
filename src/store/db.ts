@@ -141,6 +141,24 @@ export function getDb(): Database {
     _db.exec('PRAGMA foreign_keys = ON')
     const schema = readFileSync(SCHEMA_PATH, 'utf-8')
     _db.exec(schema)
+
+    // Migration: rename legacy adapter columns to provider
+    const migrations = [
+      // tasks table: try to rename adapter → provider
+      `ALTER TABLE tasks RENAME COLUMN adapter TO provider;`,
+      // adapter_budget → provider_budget
+      `ALTER TABLE adapter_budget RENAME TO provider_budget;`,
+      `ALTER TABLE provider_budget RENAME COLUMN adapter TO provider;`,
+      // adapter_config → provider_config
+      `ALTER TABLE adapter_config RENAME TO provider_config;`,
+      `ALTER TABLE provider_config RENAME COLUMN adapter TO provider;`,
+      // circuit_breaker: rename adapter → provider
+      `ALTER TABLE circuit_breaker RENAME COLUMN adapter TO provider;`,
+    ]
+    for (const sql of migrations) {
+      try { _db.exec(sql) } catch { /* column/table already renamed — skip */ }
+    }
+
     _db.exec("UPDATE tasks SET status = 'failed', output = 'Process interrupted at startup', completed_at = datetime('now') WHERE status = 'running'")
   }
   return _db

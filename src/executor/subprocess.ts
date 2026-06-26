@@ -1,4 +1,4 @@
-import type { IAdapter } from '../types/index.js'
+import type { IProvider } from '../types/index.js'
 
 export interface SubprocessResult {
   output: string
@@ -6,12 +6,12 @@ export interface SubprocessResult {
 }
 
 export async function runSubprocess(
-  adapter: IAdapter,
+  provider: IProvider,
   prompt: string,
   model: string,
   effort: string,
 ): Promise<SubprocessResult> {
   const start = Date.now()
-  const output = await adapter.execute(prompt, model, effort)
+  const output = await provider.execute(prompt, model, effort)
   return { output, durationMs: Date.now() - start }
 }

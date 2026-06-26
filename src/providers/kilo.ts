@@ -1,10 +1,10 @@
 import { execa } from 'execa'
 import { execSync } from 'child_process'
-import { BaseAdapter } from './base.js'
-import type { AdapterName } from '../types/index.js'
+import { BaseProvider } from './base.js'
+import type { ProviderName } from '../types/index.js'
 
-export class KiloAdapter extends BaseAdapter {
-  name: AdapterName = 'kilo'
+export class KiloProvider extends BaseProvider {
+  name: ProviderName = 'kilo'
 
   isAvailable(): boolean {
     try {

@@ -8,7 +8,7 @@ const CONFIG_PATH = join(IRIS_DIR, 'config.json')
 
 const DEFAULT_CONFIG: IrisConfig = {
   confirm_threshold: 'high',
-  adapters: {
+  providers: {
     claude:       { enabled: true, priority: 3, daily_budget_usd: 5.0 },
     antigravity:  { enabled: true, priority: 1, daily_budget_usd: 0.0 },
     copilot:      { enabled: true, priority: 2, daily_budget_usd: 0.0 },
@@ -38,7 +38,14 @@ export function getConfig(): IrisConfig {
   }
 
   try {
-    _config = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8')) as IrisConfig
+    const raw = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8')) as Record<string, unknown>
+    // Migration: rename legacy "adapters" key → "providers"
+    if (raw['adapters'] && !raw['providers']) {
+      raw['providers'] = raw['adapters']
+      delete raw['adapters']
+      writeFileSync(CONFIG_PATH, JSON.stringify(raw, null, 2), 'utf-8')
+    }
+    _config = raw as unknown as IrisConfig
     return _config
   } catch {
     _config = DEFAULT_CONFIG

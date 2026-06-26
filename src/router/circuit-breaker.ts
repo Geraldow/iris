@@ -1,20 +1,20 @@
-import type { AdapterName, CircuitBreakerState } from '../types/index.js'
+import type { ProviderName, CircuitBreakerState } from '../types/index.js'
 
 const MAX_FAILURES = 3
 const RESET_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 // In-memory state — resets on process restart (by design, see Decision D1)
-const states = new Map<AdapterName, CircuitBreakerState>()
+const states = new Map<ProviderName, CircuitBreakerState>()
 
-function getState(adapter: AdapterName): CircuitBreakerState {
-  if (!states.has(adapter)) {
-    states.set(adapter, { failures: 0, lastFailure: null, unavailableUntil: null })
+function getState(providerName: ProviderName): CircuitBreakerState {
+  if (!states.has(providerName)) {
+    states.set(providerName, { failures: 0, lastFailure: null, unavailableUntil: null })
   }
-  return states.get(adapter)!
+  return states.get(providerName)!
 }
 
-export function isAvailable(adapter: AdapterName): boolean {
-  const state = getState(adapter)
+export function isAvailable(providerName: ProviderName): boolean {
+  const state = getState(providerName)
 
   if (state.unavailableUntil === null) return true
 
@@ -27,8 +27,8 @@ export function isAvailable(adapter: AdapterName): boolean {
   return false
 }
 
-export function recordFailure(adapter: AdapterName): void {
-  const state = getState(adapter)
+export function recordFailure(providerName: ProviderName): void {
+  const state = getState(providerName)
   state.failures += 1
   state.lastFailure = Date.now()
 
@@ -37,13 +37,13 @@ export function recordFailure(adapter: AdapterName): void {
   }
 }
 
-export function recordSuccess(adapter: AdapterName): void {
+export function recordSuccess(providerName: ProviderName): void {
   // Reset on any success (handles half-open recovery)
-  states.set(adapter, { failures: 0, lastFailure: null, unavailableUntil: null })
+  states.set(providerName, { failures: 0, lastFailure: null, unavailableUntil: null })
 }
 
-export function getStatus(adapter: AdapterName): { state: 'closed' | 'open' | 'half-open'; failures: number; unavailableUntil: number | null } {
-  const s = getState(adapter)
+export function getStatus(providerName: ProviderName): { state: 'closed' | 'open' | 'half-open'; failures: number; unavailableUntil: number | null } {
+  const s = getState(providerName)
   let circuitState: 'closed' | 'open' | 'half-open' = 'closed'
 
   if (s.unavailableUntil !== null) {
@@ -53,7 +53,7 @@ export function getStatus(adapter: AdapterName): { state: 'closed' | 'open' | 'h
   return { state: circuitState, failures: s.failures, unavailableUntil: s.unavailableUntil }
 }
 
-export function getAllStatuses(): Record<AdapterName, ReturnType<typeof getStatus>> {
-  const adapters: AdapterName[] = ['claude', 'antigravity', 'copilot', 'codex', 'kilo', 'cursor', 'opencode']
-  return Object.fromEntries(adapters.map(a => [a, getStatus(a)])) as Record<AdapterName, ReturnType<typeof getStatus>>
+export function getAllStatuses(): Record<ProviderName, ReturnType<typeof getStatus>> {
+  const providers: ProviderName[] = ['claude', 'antigravity', 'copilot', 'codex', 'kilo', 'cursor', 'opencode']
+  return Object.fromEntries(providers.map(p => [p, getStatus(p)])) as Record<ProviderName, ReturnType<typeof getStatus>>
 }

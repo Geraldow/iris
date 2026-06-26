@@ -9,7 +9,7 @@ export type Phase =
   | 'archive'
 
 export type ComplexityLevel = 'low' | 'medium' | 'high'
-export type AdapterName = 'claude' | 'antigravity' | 'copilot' | 'codex' | 'kilo' | 'cursor' | 'opencode' | 'odoo-sh'
+export type ProviderName = 'claude' | 'antigravity' | 'copilot' | 'codex' | 'kilo' | 'cursor' | 'opencode' | 'odoo-sh'
 
 export type OdooTaskType =
   | 'odoo-source' | 'odoo-orm' | 'odoo-view' | 'odoo-security'
@@ -17,7 +17,7 @@ export type OdooTaskType =
   | 'odoo-mail' | 'odoo-portal' | 'odoo-migration' | 'odoo-test'
   | 'odoo-debug' | 'odoo-ops' | 'odoo-ci' | 'odoo-api'
   | 'odoo-commit' | 'odoo-pr' | 'odoo-changelog' | 'odoo-module'
-  | 'odoo-accounting' | 'odoo-stock'
+  | 'odoo-accounting' | 'odoo-stock' | 'odoo-docs'
 export type TaskStatus =
   | 'pending'
   | 'running'
@@ -31,7 +31,7 @@ export type TaskStatus =
 export interface ITask {
   id: string
   session_id: string | null
-  adapter: AdapterName
+  provider: ProviderName
   phase: Phase
   complexity: ComplexityLevel
   status: TaskStatus
@@ -43,8 +43,8 @@ export interface ITask {
   cost_usd: number
 }
 
-export interface IAdapter {
-  name: AdapterName
+export interface IProvider {
+  name: ProviderName
   execute(prompt: string, model: string, effort: string): Promise<string>
   isAvailable(): boolean
 }
@@ -70,10 +70,11 @@ export interface DelegateRequest {
   confirm?: string
   override?: { model?: string; effort?: string }
   detectedSkills?: SkillRequirement[]
+  provider?: ProviderName
 }
 
 export interface PendingPlan {
-  adapter: AdapterName
+  provider: ProviderName
   model: string
   effort: string
   complexity: ComplexityLevel
@@ -83,13 +84,15 @@ export interface PendingPlan {
 
 export interface DelegateResult {
   taskId: string
-  adapter: AdapterName
+  provider: ProviderName
   model: string
   effort: string
   complexity: ComplexityLevel
   engramId?: number
   tokens?: number
   cost_usd?: number
+  startedAt?: string     // ISO 8601 timestamp when the sub-agent started executing
+  completedAt?: string   // ISO 8601 timestamp when the sub-agent finished
   duration_ms?: number
   status: 'done' | 'pending_confirmation' | 'failed' | 'fallback' | 'dry_run' | 'running'
   plan?: PendingPlan
@@ -111,9 +114,9 @@ export interface ComplexityScore {
   }
 }
 
-export interface AdapterSelection {
-  primary: AdapterName
-  fallback: AdapterName | null
+export interface ProviderSelection {
+  primary: ProviderName
+  fallback: ProviderName | null
   model: string
   effort: string
 }
@@ -127,7 +130,7 @@ export interface CircuitBreakerState {
 // ---------- Budget ----------
 
 export interface BudgetStatus {
-  adapter: AdapterName
+  provider: ProviderName
   daily_limit_usd: number
   current_spend_usd: number
   reset_date: string
@@ -170,7 +173,7 @@ export interface EnterpriseSearchResult {
 
 // ---------- Config ----------
 
-export interface AdapterConfig {
+export interface ProviderConfig {
   enabled: boolean
   priority: number
   daily_budget_usd: number
@@ -185,7 +188,7 @@ export interface OdooShConfig {
 
 export interface IrisConfig {
   confirm_threshold: ComplexityLevel | 'never'
-  adapters: Record<AdapterName, AdapterConfig>
+  providers: Record<ProviderName, ProviderConfig>
   odoo_sh?: OdooShConfig
 }
 

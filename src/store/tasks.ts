@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto'
 import { getDb } from './db.js'
-import type { ITask, AdapterName, Phase, ComplexityLevel, TaskStatus } from '../types/index.js'
+import type { ITask, ProviderName, Phase, ComplexityLevel, TaskStatus } from '../types/index.js'
 
 type SQLValue = string | number | bigint | null
 
 export function createTask(data: {
   session_id?: string
-  adapter: AdapterName
+  provider: ProviderName
   phase: Phase
   complexity: ComplexityLevel
   prompt?: string
@@ -16,9 +16,9 @@ export function createTask(data: {
   const now = new Date().toISOString()
 
   db.prepare(`
-    INSERT INTO tasks (id, session_id, adapter, phase, complexity, status, created_at, prompt)
+    INSERT INTO tasks (id, session_id, provider, phase, complexity, status, created_at, prompt)
     VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)
-  `).run(id, data.session_id ?? null, data.adapter, data.phase, data.complexity, now, data.prompt ?? null)
+  `).run(id, data.session_id ?? null, data.provider, data.phase, data.complexity, now, data.prompt ?? null)
 
   return getTask(id)!
 }
@@ -49,13 +49,13 @@ export function getTask(id: string): ITask | null {
   return row as unknown as ITask
 }
 
-export function listTasks(opts: { limit?: number; phase?: string; adapter?: string } = {}): ITask[] {
+export function listTasks(opts: { limit?: number; phase?: string; provider?: string } = {}): ITask[] {
   const db = getDb()
   const conditions: string[] = []
   const values: SQLValue[] = []
 
   if (opts.phase) { conditions.push('phase = ?'); values.push(opts.phase) }
-  if (opts.adapter) { conditions.push('adapter = ?'); values.push(opts.adapter) }
+  if (opts.provider) { conditions.push('provider = ?'); values.push(opts.provider) }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
   values.push(opts.limit ?? 50)

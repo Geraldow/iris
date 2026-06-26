@@ -7,7 +7,7 @@
 
 ## 📍 Cómo leer esto
 
-Este documento tiene **15 secciones** que van de lo más simple a lo más técnico:
+Este documento tiene **17 secciones** que van de lo más simple a lo más técnico:
 
 | Sección | Nivel | Lo que encontrarás |
 |---------|-------|-------------------|
@@ -26,6 +26,8 @@ Este documento tiene **15 secciones** que van de lo más simple a lo más técni
 | **13. Infraestructura y seguridad** | 🔥 Experto | Zonas de red, deployment, límites de seguridad, protocolos. |
 | **14. El tiempo en iris** | 🔥 Experto | Timeline del proyecto, gitGraph, Gantt de hitos. |
 | **15. Modelo C4** | 🔥 Experto | Contexto, contenedores, componentes — la vista del arquitecto. |
+| **16. Viaje del Dato** | 💎 Núcleo | Flujo temporal del prompt: 6 zonas, 3 paths de ejecución, 7 providers, circuit breaker, budgets, two-phase commit. |
+| **17. Arquitectura del Código** | 💎 Núcleo | Estructura estática: 7 capas, 43+ archivos fuente, imports, interfaces, DB schema, tipos. |
 
 ---
 
@@ -2049,30 +2051,27 @@ classDiagram
         
         class "adapters/" as Adapters {
             +claude.ts
-            +gemini.ts
+            +antigravity.ts
             +opencode.ts
-            +fallback.ts
+            +copilot.ts
+            +codex.ts
+            +kilo.ts
+            +cursor.ts
             +base.ts
         }
         
         class "engram/" as Engram {
-            +memory.ts
-            +search.ts
-            +judge.ts
-            +session.ts
+            +client.ts
+            +sync.ts
         }
         
         class "codegraph/" as CodeGraph {
-            +search.ts
-            +context.ts
-            +trace.ts
-            +explore.ts
+            +client.ts
         }
         
         class "quality/" as Quality {
-            +scanner.ts
-            +dimensions/
-            +report.ts
+            +quality-scanner.ts
+            +quality-cli.ts
         }
     }
 
@@ -2101,50 +2100,57 @@ La vista de alto nivel de todas las zonas de red y cómo se conectan.
 
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#e6edf3', 'primaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'secondaryColor': '#1e293b', 'tertiaryColor': '#0f172a'}}}%%
-architecture-beta
-    group local_zone[Zona Local — Desarrollo]
+flowchart LR
+    subgraph LOCAL["Zona Local - Desarrollo"]
+        IRIS["iris MCP Server"]
+        CODEGRAPH["CodeGraph (grafo de código)"]
+        ENGRAM["Engram DB (memoria persistente)"]
+        LOCALFS["Sistema de Archivos local"]
+        JUNCTION((Router Interno))
+    end
 
-    service iris_server[iris MCP] in local_zone
-    service codegraph[CodeGraph] in local_zone
-    service engram[Engram DB] in local_zone
-    service local_fs[Sistema de Archivos] in local_zone
+    subgraph CLOUD["Zona Cloud - AI Providers"]
+        CLAUDE["Claude API (Sonnet/Opus)"]
+        GEMINI["Gemini API (Antigravity/agy)"]
+        OP["OpenCode API (DeepSeek)"]
+        OPE["OpenAI API (Codex)"]
+    end
 
-    group cloud_zone[Zona Cloud — AI Providers]
+    subgraph ODOO["Zona Odoo - Cliente"]
+        ODOOSH["Odoo.sh (instancia)"]
+        PG["PostgreSQL (base de datos)"]
+        BRIDGE["alesco_api_bridge"]
+    end
 
-    service claude[Claude API] in cloud_zone
-    service gemini[Gemini API] in cloud_zone
-    service opencode[OpenCode API] in cloud_zone
-    service openai[OpenAI API] in cloud_zone
+    subgraph OBS["Zona Observabilidad"]
+        OTEL["OpenTelemetry Collector"]
+        GRAFANA["Grafana Cloud"]
+    end
 
-    group odoo_zone[Zona Odoo — Cliente]
+    IRIS --> JUNCTION
+    JUNCTION --> CODEGRAPH
+    JUNCTION --> ENGRAM
+    JUNCTION --> LOCALFS
 
-    service odoo_sh[Odoo.sh] in odoo_zone
-    service postgresql[PostgreSQL] in odoo_zone
-    service bridge[alesco_api_bridge] in odoo_zone
+    IRIS --> CLAUDE
+    IRIS --> GEMINI
+    IRIS --> OP
+    IRIS --> OPE
+    IRIS -.->|fallback| OP
 
-    group observability_zone[Zona Observabilidad]
+    IRIS <--> ODOOSH
+    ODOOSH --> PG
+    ODOOSH --> BRIDGE
 
-    service otel[OpenTelemetry] in observability_zone
-    service grafana[Grafana Cloud] in observability_zone
+    IRIS -.-> OTEL
+    OTEL --> GRAFANA
 
-    junction junction_router at local_zone
-
-    iris_server:L -- R: junction_router
-    junction_router:T --> B: codegraph
-    junction_router:T --> B: engram
-    junction_router:T --> B: local_fs
-
-    iris_server:R --> L: claude
-    iris_server:R --> L: gemini
-    iris_server:R --> L: opencode
-    iris_server:R --> L: openai
-
-    iris_server:B --> T: odoo_sh
-    odoo_sh:R --> L: postgresql
-    odoo_sh:T --> B: bridge
-
-    iris_server:T --> B: otel
-    otel:R --> L: grafana
+    style LOCAL fill:#0f172a,stroke:#22d3ee,stroke-width:2px
+    style CLOUD fill:#1e293b,stroke:#a855f7,stroke-width:2px
+    style ODOO fill:#0f172a,stroke:#f59e0b,stroke-width:2px
+    style OBS fill:#1e293b,stroke:#10b981,stroke-width:2px
+    style JUNCTION fill:#fef3c7,stroke:#b45309,stroke-width:2px,color:#000
+    style IRIS fill:#0f172a,stroke:#22d3ee,stroke-width:3px
 ```
 
 ### Zonas de Seguridad
@@ -2807,45 +2813,39 @@ flowchart TD
             ODOO_SH["odoo_sh tools<br/>discover / logs / psql / status"]
         end
         
-        subgraph ADAPTERS["src/adapters/ — 7 adaptadores"]
-            BASE["base.ts<br/>AIAdapter interface"]
-            CLAUDE["claude.ts<br/>Claude Sonnet 4"]
-            GEMINI["gemini.ts<br/>Gemini 2.5 Pro"]
+        subgraph ADAPTERS["src/adapters/ — 8 adaptadores"]
+            BASE["base.ts<br/>IAdapter interface"]
+            CLAUDE["claude.ts<br/>Claude Sonnet 4/Opus 4"]
+            ANTIGRAVITY["antigravity.ts<br/>Gemini Flash/Pro"]
             OPENCODE["opencode.ts<br/>DeepSeek v4"]
-            FALLBACK["fallback.ts<br/>Haiku fallback"]
+            COPILOT_ADAPT["copilot.ts<br/>GPT-4.1 mini/5.2"]
+            CODEX_ADAPT["codex.ts<br/>o4-mini/o3"]
+            KILO_ADAPT["kilo.ts<br/>Sonnet/Opus"]
+            CURSOR_ADAPT["cursor.ts<br/>Sonnet/Opus"]
         end
         
         subgraph ENGRAM_SRC["src/engram/ — Memoria"]
-            MEMORY["memory.ts<br/>Core mem_save / search"]
-            JUDGE_SRC["judge.ts<br/>Conflict resolution"]
-            SESSION_SRC["session.ts<br/>Session lifecycle"]
+            CLIENT["client.ts<br/>Engram MCP client"]
+            SYNC["sync.ts<br/>saveResult / getObservation"]
         end
         
         subgraph CODEGRAPH_SRC["src/codegraph/ — Grafo"]
-            SEARCH_CG["search.ts<br/>Symbol search"]
-            CONTEXT_CG["context.ts<br/>Task context builder"]
-            TRACE_CG["trace.ts<br/>Call path tracing"]
-            EXPLORE_CG["explore.ts<br/>Multi-file explore"]
+            CG_CLIENT["client.ts<br/>CodeGraph MCP client"]
         end
 
-        subGRAPH QUALITY_SRC["src/quality/ — Quality"]
-            SCANNER["scanner.ts<br/>Quality scanner core"]
-            DIMENSIONS["dimensions/<br/>10 scanners"]
-            REPORT["report.ts<br/>Score report builder"]
+        subgraph QUALITY_SRC["src/tools/ — Quality"]
+            SCANNER["quality-scanner.ts<br/>Quality scanner core"]
+            CLI_SCANNER["quality-cli.ts<br/>Quality CLI tool"]
         end
+        
     end
 
     INDEX --> DELEGATE
     INDEX --> STATUS
     DELEGATE --> BASE
-    DELEGATE --> MEMORY
-    DELEGATE --> SEARCH_CG
+    DELEGATE --> CLIENT
     STATUS --> BASE
-    MEMORY --> JUDGE_SRC
-    CONTEXT_CG --> SEARCH_CG
-    CONTEXT_CG --> TRACE_CG
-    SCANNER --> DIMENSIONS
-    SCANNER --> REPORT
+    CLIENT --> SYNC
 
     style INDEX fill:#0f172a,stroke:#a855f7,stroke-width:2px
     style DELEGATE fill:#0f172a,stroke:#22d3ee,stroke-width:2px
@@ -2860,7 +2860,7 @@ flowchart TD
 
 | Componente | Archivos | Líneas | % del total | Dependencias clave |
 |-----------|:-------:|:------:|:-----------:|-------------------|
-| **Delegate Engine** | 1 | 374 | 12% | base.ts, memory.ts, codegraph |
+| **Delegate Engine** | 1 | 407 | 12% | base.ts, sync.ts, codegraph/client.ts |
 | **Router + Classifier** | 2 | ~150 | 5% | delegate.ts |
 | **AI Adapters** | 7 | ~800 | 26% | base.ts |
 | **Engram** | 4 | ~600 | 19% | sqlite, embeddings |
@@ -2913,10 +2913,10 @@ flowchart BT
         C4_DELEGATE["delegate.ts"]
         C4_BASE["base.ts"]
         C4_CLAUDE["claude.ts"]
-        C4_MEMORY["memory.ts"]
-        C4_SCANNER["scanner.ts"]
-        C4_SEARCH_CG["search.ts"]
-        C4_TRACE_CG["trace.ts"]
+        C4_ANTIGRAVITY["antigravity.ts"]
+        C4_CLIENT["client.ts (Engram)"]
+        C4_SCANNER["quality-scanner.ts"]
+        C4_CG["client.ts (CodeGraph)"]
     end
 
     C1 --> C2 : "se descompone en"
@@ -2967,8 +2967,9 @@ iris es un sistema complejo, pero su lógica es simple: **agentes especialistas 
 | 🌿 **Funcionamiento** | 3-4 | Desarrolladores que empiezan a usar iris |
 | 🌳 **Arquitectura** | 5-8 | Arquitectos que necesitan entender el diseño |
 | 🔥 **Profundidad técnica** | 9-15 | Ingenieros que quieren ver los detalles de implementación |
+| 🗺️ **Diagramas maestros** | 16-17 | Cualquiera que quiera ver el flujo completo del dato y la estructura del código |
 
-### Las 15 secciones en una frase
+### Las 17 secciones en una frase
 
 | # | Sección | En una frase |
 |---|---------|-------------|
@@ -2987,6 +2988,8 @@ iris es un sistema complejo, pero su lógica es simple: **agentes especialistas 
 | 13 | Infraestructura y seguridad | Zonas de red, protocolos, deployment y guardrails de git |
 | 14 | El tiempo en iris | Timeline del proyecto, gitGraph, Gantt de hitos y ciclo de release |
 | 15 | Modelo C4 | Contexto → Contenedores → Componentes → Código en 4 niveles |
+| 16 | El Viaje Completo del Dato | Diagrama Mermaid de 6 zonas mostrando el flujo completo del prompt: entrada → clasificación → construcción de prompt → validación → ejecución → retorno |
+| 17 | La Arquitectura del Código | Diagrama Mermaid de 7 capas mostrando la estructura completa del source: entry → server → router → adapters → executors → context → persistence |
 
 ### Cómo profundizar
 
@@ -2999,10 +3002,1042 @@ iris es un sistema complejo, pero su lógica es simple: **agentes especialistas 
 | El PRD original con las ingenierías | `docs/01-PRD.md` |
 | Cómo contribuir y el Reciprocal Apprenticeship | `docs/04-CONTRIBUTING.md` |
 | Diagramas de clases UML en profundidad | `docs/03-ARCHITECTURE.md` |
+| El flujo completo del dato (Mermaid) | Sección 16 — diagrama inline en este documento |
+| La arquitectura del código fuente (Mermaid) | Sección 17 — diagrama inline en este documento |
 | Operaciones Odoo.sh (SSH, psql, logs) | `docs/03-ARCHITECTURE.md` §7 |
 
 ---
 
 *Documento generado a partir de la memoria Engram del proyecto iris.*
 *Fuentes: AGENTS.md (1061 líneas), SYSTEM-GUIDE.md raíz (1051 líneas), docs/SYSTEM-GUIDE.md (3223 líneas), docs/01-PRD.md, docs/03-ARCHITECTURE.md, docs/04-CONTRIBUTING.md*
-*Última actualización: 2026-06-15 — 15 secciones, ~3000 líneas, ~40 diagramas Mermaid*
+*Última actualización: 2026-06-17 — 17 secciones, ~3100 líneas, ~42 diagramas*
+
+---
+
+# ⛵ Sección 16: El Viaje Completo del Dato — Diagrama Mermaid
+
+> **Propósito:** Mostrar visualmente cómo un prompt del desarrollador viaja a través de todo el sistema iris, desde que se escribe en lenguaje natural hasta que se recibe el resultado con enseñanza incorporada.
+
+El diagrama siguiente mapea el flujo completo en **6 zonas secuenciales**, cada una correspondiente a una etapa del pipeline de delegación de iris. Sigue las flechas de arriba a abajo para recorrer el viaje completo del dato.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+flowchart TD
+    classDef zone fill:#0a1628,stroke:#22d3ee,stroke-width:1px,color:#e6edf3
+    classDef dev fill:#1a2332,stroke:#22d3ee,stroke-width:2px,color:#fff
+    classDef process fill:#161b22,stroke:#a855f7,stroke-width:1px,color:#e6edf3
+    classDef gate fill:#2d1b69,stroke:#f59e0b,stroke-width:2px,color:#fff
+    classDef adapter fill:#1a1a2e,stroke:#f59e0b,stroke-width:1px,color:#e6edf3
+    classDef store fill:#0f3d3d,stroke:#22d3ee,stroke-width:1px,color:#e6edf3
+    classDef error fill:#3d0f0f,stroke:#ef4444,stroke-width:2px,color:#fff
+
+    subgraph Z1["Zona 1: Punto de Entrada"]
+        DEV("👤 Developer<br/>Escribe prompt en lenguaje natural"):::dev
+        INDEX("index.ts<br/>McpServer + registerTools()<br/>+ StdioServerTransport"):::process
+        SERVER("server.ts<br/>12 MCP tools registrados:<br/>delegate · status · history · task<br/>config · setup · odoo_sh_*"):::process
+    end
+
+    subgraph Z2["Zona 2: Clasificación y Routing"]
+        ODOO("odoo-selector.ts<br/>detectTaskType()<br/>130+ keywords → 23 task types"):::process
+        SKILL("context-detector.ts<br/>detectSkills()<br/>Por fase + instrucción + filePath"):::process
+        SCORE("router/classifier.ts<br/>scoreComplexity()<br/>scope(30) + ctxSize(30)<br/>+ arch(20) + dep(20)<br/>→ LOW≤35 · MED 36-70 · HIGH≥71"):::process
+        SELECT("router/selector.ts<br/>selectProvider()<br/>phase → provider primario<br/>complexity → modelo exacto<br/>OdooTaskType override"):::process
+    end
+
+    subgraph Z3["Zona 3: Construcción del Prompt"]
+        TEMPLATE("loadTemplate(phase)<br/>Lee prompts/{phase}.md<br/>Fallback: meta.md"):::process
+        FETCH("getObservation(ids)<br/>Fetch contextIds desde Engram<br/>Promise.all en paralelo"):::store
+        ODOO_CTX("buildOdooContext()<br/>Detecta proyecto Odoo<br/>versión + edición + módulo"):::process
+        KNOWLEDGE("injectKnowledgeContext()<br/>Reglas contextuales<br/>por OdooTaskType"):::process
+        SKILLS_INJECT("Inyecta skills detectados<br/>confidence ≥ 0.8<br/>nombre + score"):::process
+        LANG("Detecta idioma<br/>Español → respuesta español<br/>English → english"):::process
+        PREAMBLE("buildTaskPreamble()<br/>Contexto SDD inicial<br/>fase + tipo Odoo"):::process
+        PROMPT_READY("✅ Prompt final listo<br/>template + contextIds<br/>+ Odoo ctx + skills<br/>+ knowledge + preamble"):::process
+    end
+
+    subgraph Z4["Zona 4: Puertas de Validación"]
+        TWO_PHASE{"score.level ==<br/>confirm_threshold?"}:::gate
+        TOKEN("Genera confirm_token<br/>UUID v4 · TTL 10 minutos"):::process
+        PENDING("Devuelve PendingPlan<br/>adapter + model + effort<br/>Status: pending_confirmation"):::process
+        BUDGET{"isOverBudget()?<br/>Budget tracker diario"}:::gate
+        CB{"Circuit Breaker<br/>isAvailable()?"}:::gate
+        FALLBACK{"Fallback disponible?<br/>selectProvider().fallback"}:::gate
+        NO_PROVIDER("❌ Error:<br/>All providers unavailable"):::error
+    end
+
+    subgraph Z5["Zona 5: Ejecución de la Tarea"]
+        TASK("store/tasks.ts<br/>createTask()<br/>UUID + adapter + phase<br/>complexity + prompt"):::store
+        RUNNING("updateTask()<br/>Status: running"):::process
+        IS_ANTI{"Adapter:<br/>antigravity?"}:::gate
+        IS_FNF{"fire_and_forget?"}:::gate
+        TERMINAL("executor/terminal.ts<br/>runInTerminal()<br/>16 min timeout · agy CLI<br/>Guarda prompt en Engram"):::adapter
+        SUBPROCESS("executor/subprocess.ts<br/>runSubprocess(adapter)<br/>10 min timeout<br/>claude · copilot · codex<br/>kilo · cursor · opencode"):::adapter
+        FNF_BG("Async Background:<br/>Retorna status 'running'<br/>Callback: saveResult →<br/>completeTask / failTask"):::adapter
+        EXTRACT("extractAgyOutput()<br/>Parse JSON → result string<br/>Fallback: raw string"):::process
+    end
+
+    subgraph Z6["Zona 6: Persistencia y Retorno"]
+        SAVE("engram/sync.ts<br/>saveResult()<br/>taskId + phase + adapter<br/>contenido completo"):::store
+        RECORD("router/circuit-breaker.ts<br/>recordSuccess / Failure<br/>store/budgets.ts recordUsage()"):::store
+        COMPLETE("store/tasks.ts<br/>completeTask / failTask"):::store
+        IS_DESIGN{"Phase ==<br/>'design'?"}:::gate
+        DIAGRAM("diagrams/generator.ts<br/>generateDiagram()<br/>Excalidraw architecture"):::process
+        HF("triggerHumanFirstDoc()<br/>Antigravity + Gemini<br/>Genera .md en docs/sdd/"):::process
+        BUILD("Construye DelegateResult<br/>taskId · adapter · model<br/>engramId · duration_ms<br/>status · summary"):::process
+        RETURN("📤 Retorna al developer<br/>Resumen conciso<br/>Contenido completo en Engram<br/>accesible vía mem_context"):::dev
+    end
+
+    DEV -->|JSON-RPC 2.0| INDEX
+    INDEX -->|registerTools()| SERVER
+    SERVER -->|handleDelegate()| ODOO
+    ODOO --> SKILL
+    SKILL --> SCORE
+    SCORE -->|ComplexityScore| SELECT
+    SELECT -->|ProviderSelection| TEMPLATE
+
+    TEMPLATE --> FETCH
+    FETCH --> ODOO_CTX
+    ODOO_CTX --> KNOWLEDGE
+    KNOWLEDGE --> SKILLS_INJECT
+    SKILLS_INJECT --> LANG
+    LANG --> PREAMBLE
+    PREAMBLE --> PROMPT_READY
+
+    PROMPT_READY --> TWO_PHASE
+    TWO_PHASE -->|Sí (== threshold)| TOKEN
+    TOKEN --> PENDING
+    TWO_PHASE -->|No (menor o dry_run)| BUDGET
+    BUDGET -->|Sobre budget| CB
+    BUDGET -->|Dentro de budget| CB
+    CB -->|No disponible| FALLBACK
+    CB -->|Disponible| TASK
+    FALLBACK -->|Sí| TASK
+    FALLBACK -->|No| NO_PROVIDER
+
+    TASK --> RUNNING
+    RUNNING --> IS_FNF
+    IS_FNF -->|Sí (antigravity only)| FNF_BG
+    IS_FNF -->|No| IS_ANTI
+    IS_ANTI -->|Sí| TERMINAL
+    IS_ANTI -->|No| SUBPROCESS
+
+    TERMINAL --> EXTRACT
+    SUBPROCESS --> EXTRACT
+    FNF_BG -.->|async callback| SAVE
+
+    EXTRACT --> SAVE
+    SAVE --> RECORD
+    RECORD --> COMPLETE
+    COMPLETE --> IS_DESIGN
+    IS_DESIGN -->|Sí| DIAGRAM
+    IS_DESIGN -->|No| HF
+    DIAGRAM -.->|fire & forget| HF
+    HF -.->|fire & forget| BUILD
+    BUILD --> RETURN
+```
+
+## 📐 Las 6 zonas del flujo
+
+| Zona | Nombre | Archivos clave | Función principal |
+|------|--------|---------------|-------------------|
+| 🟦 **1** | Punto de Entrada | `index.ts`, `server.ts` | Recibe JSON-RPC 2.0, registra 12 tools MCP, enruta a `handleDelegate()` |
+| 🟪 **2** | Clasificación y Routing | `odoo-selector.ts`, `context-detector.ts`, `classifier.ts`, `selector.ts` | Detecta tipo de tarea Odoo (23 tipos), skills necesarios, scoring de complejidad (4 dimensiones), selección de provider |
+| 🟩 **3** | Construcción del Prompt | `delegate.ts:buildPrompt()`, `slim-md.ts`, `odoo.ts`, `rules.ts` | Arma prompt final: template → contextIds → Odoo context → knowledge → skills → idioma → preamble |
+| 🟧 **4** | Puertas de Validación | `delegate.ts` (two-phase), `circuit-breaker.ts`, `budgets.ts` | Two-phase commit gate, budget tracker, circuit breaker, fallback chain (primary → fallback → error) |
+| 🟥 **5** | Ejecución de la Tarea | `tasks.ts`, `subprocess.ts`, `terminal.ts` | Crea task SQLite, ejecuta vía subprocess (6 providers) o terminal (antigravity) o background (fire-and-forget) |
+| 🟫 **6** | Persistencia y Retorno | `sync.ts`, `circuit-breaker.ts`, `tasks.ts`, `generator.ts` | Guarda resultado en Engram, registra éxito/fallo, genera diagramas + Human First docs, retorna resumen |
+
+## 🗺️ Cómo leer el diagrama
+
+1. **Zona 1 → Zona 6**: Sigue las flechas descendentes; cada zona transforma el dato y lo pasa a la siguiente
+2. **Diamantes (♦)**: Son compuertas de decisión — bifurcan el flujo según condiciones
+3. **Flechas punteadas (- - ->)**: Indican procesos async o fire-and-forget que no bloquean el flujo principal
+4. **Colores**: Cyan = entry/exit, Púrpura = procesamiento, Naranja = gates, Verde oscuro = almacenamiento, Rojo = error
+5. **Cada nodo** muestra la ruta real del archivo + la función que ejecuta + datos concretos (timeouts, thresholds, modelos)
+
+---
+
+# 🏗️ Sección 17: La Arquitectura del Código — Diagrama Mermaid
+
+> **Propósito:** Mostrar la estructura completa del código fuente de iris: archivos, módulos, capas, dependencias y flujo de llamados, para que cualquier desarrollador pueda orientarse rápidamente en el repositorio.
+
+Este diagrama complementa al de la Sección 16: mientras que el primero muestra **cómo fluye el dato**, este muestra **dónde vive el código** que lo procesa. Juntos forman una vista completa —el QUÉ y el DÓNDE— de la arquitectura de iris.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
+flowchart TD
+    classDef layer fill:#0a1628,stroke:#22d3ee,stroke-width:2px,color:#e6edf3
+    classDef root fill:#1a2332,stroke:#22d3ee,stroke-width:2px,color:#fff
+    classDef tool fill:#161b22,stroke:#a855f7,stroke-width:1px,color:#e6edf3
+    classDef router fill:#1e293b,stroke:#f59e0b,stroke-width:1px,color:#e6edf3
+    classDef adapter fill:#1a1a2e,stroke:#f59e0b,stroke-width:1px,color:#e6edf3
+    classDef exec fill:#161b22,stroke:#10b981,stroke-width:1px,color:#e6edf3
+    classDef ctx fill:#1e293b,stroke:#22d3ee,stroke-width:1px,color:#e6edf3
+    classDef store fill:#0f3d3d,stroke:#22d3ee,stroke-width:1px,color:#e6edf3
+    classDef integ fill:#1e293b,stroke:#a855f7,stroke-width:1px,color:#e6edf3
+    classDef type fill:#2d1b69,stroke:#a855f7,stroke-width:1px,color:#e6edf3
+
+    subgraph L0["Layer 0: Entry Point"]
+        INDEX("src/index.ts<br/>• McpServer(iris, version)<br/>• registerTools()<br/>• StdioServerTransport<br/>• SIGINT/SIGTERM<br/>• CLI interface + help"):::root
+        CONFIG("src/config.ts<br/>• getConfig() / saveConfig()<br/>• ~/.iris/config.json<br/>• 8 providers config<br/>• confirm_threshold<br/>• odoo_sh settings"):::root
+        UPDATER("src/updater.ts<br/>• Version check<br/>• Self-update logic"):::root
+        CONFIG_LOCAL("src/config/local.ts<br/>• Local overrides"):::root
+    end
+
+    subgraph L1["Layer 1: Server & MCP Tools"]
+        SERVER("src/server.ts<br/>registerTools()"):::root
+        DELEGATE("tools/delegate.ts<br/>handleDelegate()<br/>407 líneas — corazón de iris<br/>• buildPrompt()<br/>• executeTask()<br/>• Two-phase commit<br/>• 7 adapters registrados"):::tool
+        STATUS("tools/status.ts<br/>handleStatus() / handleSetup()"):::tool
+        HISTORY("tools/history.ts<br/>handleHistory()"):::tool
+        TASK("tools/task.ts<br/>handleTask()"):::tool
+        CONFIG_TOOL("tools/config.ts<br/>handleConfig()"):::tool
+        ODOO_DISCOVER("tools/odoo-sh.ts<br/>handleDiscover() / handleLogs()<br/>handlePsql() / handleStatus()<br/>handleBackups()"):::tool
+        UI_MAP("tools/ui-map-engine.ts<br/>UI Map Engine"):::tool
+        Q_SCANNER("tools/quality-cli.ts<br/>tools/quality-scanner.ts<br/>Quality Scanner CLI + core"):::tool
+    end
+
+    subgraph L2["Layer 2: Router (Internal Routing Engine)"]
+        CLASSIFIER("router/classifier.ts<br/>scoreComplexity()<br/>4 dimensiones (100pts)<br/>scope · ctxSize · arch · dep"):::router
+        SELECTOR("router/selector.ts<br/>selectProvider()<br/>8 providers × 8 phases<br/>Model map × complexity<br/>OdooTaskType override"):::router
+        CB("router/circuit-breaker.ts<br/>isAvailable() · recordSuccess()<br/>recordFailure() · getState()<br/>Failures → unavailable"):::router
+    end
+
+    subgraph L3["Layer 3: AI Adapters"]
+        BASE("adapters/base.ts<br/>IAdapter interface<br/>name · execute() · isAvailable()"):::adapter
+        CLAUDE("adapters/claude.ts<br/>ClaudeAdapter<br/>Haiku/Sonnet/Opus"):::adapter
+        ANTIGRAVITY("adapters/antigravity.ts<br/>AntigravityAdapter<br/>Gemini Flash/Pro"):::adapter
+        OPENCODE("adapters/opencode.ts<br/>OpenCodeAdapter<br/>DeepSeek v4/BigPickle"):::adapter
+        COPILOT_ADAPT("adapters/copilot.ts<br/>CopilotAdapter<br/>GPT-4.1 mini/4o/5.2"):::adapter
+        CODEX_ADAPT("adapters/codex.ts<br/>CodexAdapter<br/>o4-mini/o3"):::adapter
+        KILO_ADAPT("adapters/kilo.ts<br/>KiloAdapter<br/>Sonnet/Opus"):::adapter
+        CURSOR_ADAPT("adapters/cursor.ts<br/>CursorAdapter<br/>Sonnet/Opus"):::adapter
+    end
+
+    subgraph L4["Layer 4: Executors"]
+        SUBPROCESS("executor/subprocess.ts<br/>runSubprocess()<br/>10 min timeout<br/>Ejecuta adapter directo"):::exec
+        TERMINAL("executor/terminal.ts<br/>runInTerminal()<br/>16 min timeout<br/>Ejecuta agy CLI"):::exec
+        ENTERPRISE("executor/enterprise.ts<br/>Enterprise features"):::exec
+        GIT("executor/git.ts<br/>Git operations"):::exec
+    end
+
+    subgraph L5["Layer 5: Context Layer"]
+        CTX_DETECTOR("context/context-detector.ts<br/>detectSkills() · extractFilePath()"):::ctx
+        ODOO_CTX("context/odoo.ts<br/>buildOdooContext()<br/>formatOdooContextForPrompt()"):::ctx
+        ODOO_SELECT("context/odoo-selector.ts<br/>detectTaskType()<br/>130+ keywords · 23 types<br/>TASK_CONFIG + TASK_KEYWORD_MAP"):::ctx
+        RULES("context/rules.ts<br/>injectKnowledgeContext()<br/>Reglas por task type"):::ctx
+        SLIM_MD("context/slim-md.ts<br/>buildTaskPreamble()<br/>Preamble generator"):::ctx
+        MAP_CACHE("context/map-cache.ts<br/>UI Map cache"):::ctx
+    end
+
+    subgraph L6["Layer 6: Persistence & Integrations"]
+        ENGRAM_CLIENT("engram/client.ts<br/>getEngramClient()<br/>MCP stdio client"):::store
+        ENGRAM_SYNC("engram/sync.ts<br/>saveResult() · getObservation()<br/>saveTaskPrompt()"):::store
+        STORE_DB("store/db.ts<br/>SQLite connection<br/>better-sqlite3"):::store
+        STORE_TASKS("store/tasks.ts<br/>createTask() · completeTask()<br/>failTask() · getTask()"):::store
+        STORE_BUDGETS("store/budgets.ts<br/>recordUsage() · isOverBudget()<br/>getBudgetStatus()"):::store
+        CODEGRAPH("codegraph/client.ts<br/>MCP stdio client<br/>cgSearch · cgContext · cgNode"):::integ
+        DIAGRAM("diagrams/generator.ts<br/>generateDiagram()<br/>Excalidraw auto"):::integ
+    end
+
+    subgraph L7["Layer 7: Cross-Cutting Types"]
+        TYPES("types/index.ts<br/>373 líneas — todos los tipos<br/>Phase · ComplexityLevel · ProviderName<br/>OdooTaskType (23) · TaskStatus<br/>IAdapter · IDelegateRequest · IDelegateResult<br/>IrisConfig · ProviderConfig<br/>CircuitBreakerState · BudgetStatus<br/>QualityReport · QualityDimension<br/>UIMapEntry · UIMapModelEntry<br/>NavigationRoute · FieldEntry"):::type
+    end
+
+    %% L0 → L1
+    INDEX -->|registerTools()| SERVER
+
+    %% L1 internal
+    SERVER --> DELEGATE
+    SERVER --> STATUS
+    SERVER --> HISTORY
+    SERVER --> TASK
+    SERVER --> CONFIG_TOOL
+    SERVER --> ODOO_DISCOVER
+    SERVER --> UI_MAP
+    SERVER --> Q_SCANNER
+
+    DELEGATE -->|importa| CLASSIFIER
+    DELEGATE -->|importa| SELECTOR
+    DELEGATE -->|importa| CB
+    DELEGATE -->|importa| STORE_TASKS
+    DELEGATE -->|importa| STORE_BUDGETS
+    DELEGATE -->|importa| ENGRAM_SYNC
+
+    %% L2 → L3
+    CLASSIFIER -->|"score ⇒ level"| SELECTOR
+    SELECTOR -->|ProviderSelection| DELEGATE
+
+    %% L3: provider instances created in delegate.ts
+    DELEGATE -.->|"new ClaudeAdapter()"| CLAUDE
+    DELEGATE -.->|"new AntigravityAdapter()"| ANTIGRAVITY
+    DELEGATE -.->|"new OpenCodeAdapter()"| OPENCODE
+    DELEGATE -.->|"new CopilotAdapter()"| COPILOT_ADAPT
+    DELEGATE -.->|"new CodexAdapter()"| CODEX_ADAPT
+    DELEGATE -.->|"new KiloAdapter()"| KILO_ADAPT
+    DELEGATE -.->|"new CursorAdapter()"| CURSOR_ADAPT
+    CLAUDE -.->|implementa| BASE
+    ANTIGRAVITY -.->|implementa| BASE
+    OPENCODE -.->|implementa| BASE
+    COPILOT_ADAPT -.->|implementa| BASE
+    CODEX_ADAPT -.->|implementa| BASE
+    KILO_ADAPT -.->|implementa| BASE
+    CURSOR_ADAPT -.->|implementa| BASE
+
+    %% L3 → L4
+    DELEGATE -->|routes to| SUBPROCESS
+    DELEGATE -->|routes to| TERMINAL
+    DELEGATE -->|routes to| ENTERPRISE
+    DELEGATE -->|routes to| GIT
+
+    %% L2 → L5
+    DELEGATE -->|importa| CTX_DETECTOR
+    DELEGATE -->|importa| ODOO_CTX
+    DELEGATE -->|importa| ODOO_SELECT
+    DELEGATE -->|importa| RULES
+    DELEGATE -->|importa| SLIM_MD
+    DELEGATE -->|importa| MAP_CACHE
+
+    %% L5 → L6
+    DELEGATE -->|importa| ENGRAM_CLIENT
+    DELEGATE -->|importa| ENGRAM_SYNC
+    DELEGATE -->|importa| STORE_DB
+    DELEGATE -->|importa| DIAGRAM
+    DELEGATE -->|importa| CODEGRAPH
+
+    %% L7 used by all
+    DELEGATE -.->|type| TYPES
+    CLASSIFIER -.->|type| TYPES
+    SELECTOR -.->|type| TYPES
+    BASE -.->|type| TYPES
+    SUBPROCESS -.->|type| TYPES
+    ENGRAM_SYNC -.->|type| TYPES
+
+    style L0 fill:#0a1628,stroke:#22d3ee,stroke-width:2px
+    style L1 fill:#0a1628,stroke:#a855f7,stroke-width:2px
+    style L2 fill:#0a1628,stroke:#f59e0b,stroke-width:2px
+    style L3 fill:#0a1628,stroke:#f59e0b,stroke-width:2px
+    style L4 fill:#0a1628,stroke:#10b981,stroke-width:2px
+    style L5 fill:#0a1628,stroke:#22d3ee,stroke-width:2px
+    style L6 fill:#0a1628,stroke:#a855f7,stroke-width:2px
+    style L7 fill:#0a1628,stroke:#a855f7,stroke-width:2px
+```
+
+## 📐 Las 7 capas de la arquitectura
+
+| Capa | Nombre | Archivos | Propósito |
+|------|--------|----------|-----------|
+| 📦 **0** | Entry Point | `index.ts`, `config.ts`, `updater.ts`, `config/local.ts` | Bootstrap del servidor MCP, configuración global, CLI interface |
+| 📦 **1** | Server & MCP Tools | `server.ts` + 8 tools en `tools/` | Registro de 12 tools MCP, handlers de cada tool, corazón delegador |
+| 📦 **2** | Router (Internal) | `classifier.ts`, `selector.ts`, `circuit-breaker.ts` | Scoring de complejidad, selección de provider, circuit breaker |
+| 📦 **3** | AI Adapters | `base.ts` + 7 implementaciones | Interfaz unificada para 7 providers AI con modelos distintos |
+| 📦 **4** | Executors | `subprocess.ts`, `terminal.ts`, `enterprise.ts`, `git.ts` | Ejecución de tareas: subprocess, terminal (agy), enterprise, git |
+| 📦 **5** | Context Layer | 6 archivos en `context/` | Detección de skills, contexto Odoo, reglas por task type, preamble |
+| 📦 **6** | Persistence & Integrations | `engram/`, `store/`, `codegraph/`, `diagrams/` | Memoria persistente (Engram), SQLite (tasks/budgets), CodeGraph, diagramas |
+| 📦 **7** | Cross-Cutting Types | `types/index.ts` | 373 líneas de tipos compartidos por todo el sistema |
+
+## 🗺️ Cómo leer el diagrama
+
+1. **Layer 0 → Layer 1**: `index.ts` crea el McpServer y llama a `registerTools()` para exponer las 12 tools MCP
+2. **Layer 1 → Layers 2-6**: `tools/delegate.ts` (handleDelegate) es el centro neural — importa y orquesta todos los módulos internos
+3. **Layer 2 (Router)**: `classifier.ts` → `selector.ts` determinan complejidad y provider; el `circuit-breaker.ts` protege contra fallos encadenados
+4. **Layer 3 (Adapters)**: Los 7 adaptadores heredan de `base.ts` (IAdapter); cada uno encapsula un provider AI distinto
+5. **Layer 4 (Executors)**: Separación clara entre ejecución directa (subprocess) y ejecución vía terminal CLI (antigravity)
+6. **Layer 5 (Context)**: 6 módulos de contexto que enriquecen el prompt con detección de skills, reglas Odoo, y preamble SDD
+7. **Layer 6 (Persistence)**: Engram (memoria), SQLite (tasks + budgets), CodeGraph (análisis de código), Diagrams (generación)
+8. **Layer 7 (Types)**: Capa horizontal que todos los módulos importan — tipos compartidos de todo el sistema
+
+## 🔍 Detalles técnicos incluidos
+
+- **Rutas reales:** Cada nodo muestra la ruta exacta del archivo (`src/router/classifier.ts`)
+- **Funciones reales:** `handleDelegate()`, `scoreComplexity()`, `selectProvider()`, `recordSuccess()`, `detectSkills()`, `buildOdooContext()`, `saveResult()`, `runSubprocess()`, `runInTerminal()`
+- **Valores reales:** Budgets ($5/día Claude, $2/día Codex), timeouts (10min subprocess, 16min terminal), thresholds (LOW ≤35, MED 36-70, HIGH ≥71), 23 OdooTaskTypes, 130+ keywords
+- **7 adaptadores AI** con sus modelos asociados por nivel de complejidad
+- **Relaciones reales:** Flechas sólidas = imports directos; flechas punteadas = herencia de interfaces o uso de tipos
+- **Líneas exactas:** `delegate.ts` = 407 líneas, `types/index.ts` = 373 líneas
+
+---
+
+## 🔗 Conexión entre las Secciones 16 y 17
+
+| Aspecto | Sección 16 — Viaje del Dato | Sección 17 — Arquitectura del Código |
+|---------|----------------------------|--------------------------------------|
+| **Enfoque** | Flujo temporal del prompt | Estructura estática del código |
+| **Pregunta** | ¿Qué pasa cuando escribo un prompt? | ¿Dónde está cada pieza del código? |
+| **Organización** | 6 zonas por flujo | 7 capas por abstracción |
+| **Leyendo** | Sigue las flechas de arriba a abajo | Sigue las capas de arriba a abajo |
+| **Detalle** | Nombres de funciones, datos concretos | Rutas de archivos, relaciones |
+| **Formato** | Mermaid (flowchart TD, inline) | Mermaid (flowchart TD, inline) |
+
+Ambos diagramas se complementan: usa la **Sección 16** para entender **cómo funciona iris** y la **Sección 17** para saber **dónde ir a modificar el código**.
+
+---
+
+# SECCIÓN 16 — Viaje del Dato (Data Flow) 💎
+
+> **Trazabilidad completa:** cada prompt que entra a iris recorre exactamente 6 zonas, pasando por 3 posibles caminos de ejecución, 7 providers, 2 sistemas de guardrails (circuit breaker + budget), y un sistema de two-phase commit.
+
+## Zona 1 — Puerta de Entrada (Entry)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#22d3ee', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    subgraph Entry["🏛️ Zona 1 — Puerta de Entrada"]
+        MCP["MCP Client\n(Claude Desktop / Cursor / custom)"]
+        STDIO["StdioServerTransport\nstdin/stdout JSON-RPC"]
+        SERVER["McpServer\niris v1.1.7"]
+        REGTOOLS["registerTools()\nserver.ts:16-139"]
+        DELEGATE_TOOL["DelegateschemaTool\nDelegateInputSchema (zod)"]
+        VALIDATE["validate(input)"]
+        HANDLE_DELEGATE["handleDelegate()\ndelegate.ts:176-266"]
+    end
+
+    MCP -->|"JSON-RPC over stdio"| STDIO
+    STDIO -->|"deserialize"| SERVER
+    SERVER -->|"routes tool='delegate'"| REGTOOLS
+    REGTOOLS -->|"tool('delegate', ...)"| DELEGATE_TOOL
+    DELEGATE_TOOL -->|"parse(input)"| VALIDATE
+    VALIDATE -->|"if valid"| HANDLE_DELEGATE
+
+    style Entry fill:#0d1117,stroke:#22d3ee,stroke-width:2px
+    style HANDLE_DELEGATE fill:#1f6feb,stroke:#22d3ee,color:#fff
+```
+
+## Zona 2 — Detección y Clasificación (Detection & Classification)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#a855f7', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    subgraph Zone2["🔮 Zona 2 — Detección y Clasificación"]
+        HD["handleDelegate()\nrecibe DelegateRequest"]
+
+        subgraph TaskType["OdooTaskType Detection"]
+            DTT["detectTaskType(instruction)\nodoo-selector.ts:167-182"]
+            KW[("130+ keywords\n→ 23 OdooTaskTypes")]
+            TASK_CFG[("23 TaskConfig\n→ provider + knowledge + rules")]
+            TYPE_RESULT["{type, config} | null"]
+        end
+
+        subgraph Skills["Skill Detection"]
+            DS["detectSkills({phase, instruction, filePath, taskType})\ncontext-detector.ts:124-205"]
+            SKILL_REG[("SKILL_REGISTRY\n9 skills × 6 triggers")]
+            CONFIDENCE["confidence scoring\n0.5-0.9 por trigger"]
+            SKILL_RESULT["primary[] + secondary[] + all[]"]
+        end
+
+        subgraph Complexity["Complexity Scoring"]
+            SC["scoreComplexity(req)\nclassifier.ts:60-81"]
+            W30["scope: 30pts\n(words <20→5, <60→15, <150→22, else→30)"]
+            W30B["contextSize: 30pts\n(contextIds 0→5, ≤2→12, ≤5→22, else→30)"]
+            W20A["architecturalImpact: 20pts\n(phase match→20, 0 hits→2, 1-2→10, 3+→20)"]
+            W20B["dependencyResolution: 20pts\n(0 hits→2, 1-2→10, 3+→20)"]
+            LEVEL["level: LOW(≤35) | MED(36-70) | HIGH(≥71)"]
+            OVERRIDE["complexity override bypass\nfakeScore: low→20, med→50, high→85"]
+        end
+    end
+
+    HD -->|"line 193"| DTT
+    DTT --> KW
+    KW --> TASK_CFG
+    TASK_CFG --> TYPE_RESULT
+    HD -->|"line 197-203"| DS
+    DS --> SKILL_REG
+    SKILL_REG --> CONFIDENCE
+    CONFIDENCE --> SKILL_RESULT
+    HD -->|"line 206"| SC
+    SC --> W30
+    SC --> W30B
+    SC --> W20A
+    SC --> W20B
+    W30 & W30B & W20A & W20B --> LEVEL
+    SC -.->|"if override"| OVERRIDE
+    OVERRIDE -.-> LEVEL
+
+    style Zone2 fill:#0d1117,stroke:#a855f7,stroke-width:2px
+    style HD fill:#1f6feb,stroke:#a855f7,color:#fff
+```
+
+## Zona 3 — Enrutamiento (Routing)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#f59e0b', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    subgraph Zone3["🧭 Zona 3 — Enrutamiento y Two-Phase Commit"]
+        FROM_CLASS["selectProvider(\n  phase, complexityLevel,\n  forcedProvider?, overrideModel?,\n  overrideEffort?, odooTaskType?\n)\nselector.ts:91-120"]
+
+        subgraph PhaseMap["Phase → Provider"]
+            PHASE_MAP["PHASE_PROVIDER[8]\nselector.ts:5-14"]
+            PHASE_FALLBACK["PHASE_FALLBACK_PROVIDER[8]\nselector.ts:16-25"]
+            EXPLORE["explore → antigravity (fallback: claude)"]
+            PROPOSE["propose → claude (fallback: antigravity)"]
+            SPEC["spec → claude (fallback: antigravity)"]
+            DESIGN["design → antigravity (fallback: claude)"]
+            TASKS["tasks → claude (fallback: copilot)"]
+            APPLY["apply → claude (fallback: codex)"]
+            VERIFY["verify → claude (fallback: antigravity)"]
+            ARCHIVE["archive → opencode (fallback: claude)"]
+        end
+
+        subgraph ModelMaps["Model Maps × Complexity"]
+            CM["CLAUDE_MODELS\nhaiku/sonnet/opus + efforts low/high"]
+            AM["ANTIGRAVITY_MODELS\nFlash(Med)/Flash(High)/Pro(High)"]
+            CPM["COPILOT_MODELS\ngpt-4.1-mini/gpt-4o/gpt-5.2"]
+            CXM["CODEX_MODELSo4-mini/o4-mini/o3"]
+            KM["KILO_MODELS\nclaude-3-5-haiku/sonnet-4/opus-4"]
+            CUM["CURSOR_MODELS\nclaude-3-5-haiku/sonnet-4/opus-4"]
+            OM["OPENCODE_MODELS\ndeepseek-v4-flash/big-pickle/big-pickle"]
+        end
+
+        subgraph OdooOverride["OdooTaskType Override"]
+            TO["TASK_CONFIG[23]\nodoo-selector.ts:141-165"]
+            SAMPLE["odoo-source→ antigravity\nodoo-orm→ claude\nodoo-view→ claude\n..."]
+        end
+
+        subgraph TwoPhase["Two-Phase Commit Gate"]
+            TPC["confirm_threshold check"]
+            THRESHOLD["config.confirm_threshold\n'never' | 'low' | 'medium' | 'high'"]
+            PENDING["PendingPlan{\n  provider, model, effort,\n  complexity, prompt\n}"]
+            TOKEN["randomUUID() → confirm_token\n10 min TTL"]
+            PENDING_MAP["pendingTokens Map\n<token, {plan, expiresAt, request}>"]
+            RETURN_CC["return {status:'pending_confirmation',\n  confirm_token, plan}"]
+            WAIT["WAIT: client calls back with\nconfirm_token"]
+            EXECUTE["executeTask(req, plan)"]
+        end
+    end
+
+    FROM_CLASS -->|"primary ProviderName"| PHASE_MAP
+    FROM_CLASS -->|"fallback ProviderName"| PHASE_FALLBACK
+    FROM_CLASS -->|"model + effort strings"| ModelMaps
+    FROM_CLASS -->|"if odooTaskType"| TO
+    TO --> SAMPLE
+    FROM_CLASS -->|"ProviderSelection"| TPC
+    TPC --> THRESHOLD
+    THRESHOLD -->|"if scoreLevel === threshold && !dry_run"| PENDING
+    PENDING --> TOKEN
+    TOKEN --> PENDING_MAP
+    PENDING_MAP --> RETURN_CC
+    RETURN_CC --> WAIT
+    WAIT -->|"client sends confirm=<token>"| EXECUTE
+    THRESHOLD -->|"if below threshold"| EXECUTE
+    THRESHOLD -->|"if dry_run"| RETURN_DRY["return {status:'dry_run', plan}"]
+
+    style Zone3 fill:#0d1117,stroke:#f59e0b,stroke-width:2px
+    style FROM_CLASS fill:#1f6feb,stroke:#f59e0b,color:#fff
+```
+
+## Zona 4 — Ensamblaje de Contexto (Prompt Building)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#10b981', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    subgraph Zone4["📦 Zona 4 — Ensamblaje de Contexto (buildPrompt)"]
+        BP["buildPrompt(req, odooTaskType?)\ndelegate.ts:89-148"]
+
+        subgraph Template["Template Loading"]
+            LT["loadTemplate('sdd-{phase}.md')"]
+            TPL_DIR["prompts/\nsdd-explore.md\nsdd-propose.md\nsdd-spec.md\nsdd-design.md\nsdd-tasks.md\nsdd-apply.md\nsdd-verify.md\nsdd-archive.md"]
+            FALLBACK_META["Fallback: meta.md\niris/prompts/meta.md"]
+        end
+
+        subgraph Context["Engram Context Fetch"]
+            GO["getObservation(id)\n× N (contextIds[])"]
+            PARALLEL["Promise.all(\n  req.contextIds.map(\n    id => getObservation(id)\n      .catch(() => null)\n  )\n)"]
+            FILTER["filter(Boolean)\nformat as\n'### Context {id}\\n{content}'"]
+        end
+
+        subgraph Substitution["Template Variable Substitution"]
+            VARS["6 variables:\n{phase}, {change}, {instruction},\n{deliverable}, {contextIds}, {outputPath}"]
+            NO_SUBST["Fallback:\nraw instruction + context + deliverable"]
+        end
+
+        subgraph OdooInjection["Odoo Context Injection"]
+            BOC["buildOdooContext(instruction)\nodoo.ts"]
+            MANIFEST["findManifest()\n4 levels up"]
+            DETECT["detectEdition(manifest)\ncommunity vs enterprise"]
+            FORMAT["formatOdooContextForPrompt()"]
+        end
+
+        subgraph Knowledge["Knowledge Injection"]
+            IKC["injectKnowledgeContext(odooTaskType)\nrules.ts"]
+            RULES[("RULES.md\n13 Odoo rules (R0-R13)")]
+            KNOWLEDGE_FILES[("knowledgeFiles[]\ndel TASK_CONFIG")]
+        end
+
+        subgraph SkillsInjection["Skills Injection"]
+            SKILLS["detectedSkills filter\nconfidence ≥ 0.8 → primary"]
+            SKILL_TEXT["'## Detected Skills\n- {name} (confidence: {n})'"]
+        end
+
+        LANG_DETECT["language detection instruction\n'respond in same language'"]
+        PREAMBLE["buildTaskPreamble(phase, odooTaskType)\nslim-md.ts"]
+    end
+
+    BP --> LT
+    LT --> TPL_DIR
+    TPL_DIR -.->|"if missing"| FALLBACK_META
+    BP --> GO
+    GO --> PARALLEL
+    PARALLEL --> FILTER
+    BP --> VARS
+    VARS -.->|"if no substitution"| NO_SUBST
+    BP --> BOC
+    BOC --> MANIFEST
+    MANIFEST --> DETECT
+    DETECT --> FORMAT
+    BP --> IKC
+    IKC --> RULES
+    IKC --> KNOWLEDGE_FILES
+    BP --> SKILLS
+    SKILLS --> SKILL_TEXT
+    BP --> LANG_DETECT
+    BP --> PREAMBLE
+
+    style Zone4 fill:#0d1117,stroke:#10b981,stroke-width:2px
+    style BP fill:#1f6feb,stroke:#10b981,color:#fff
+```
+
+## Zona 5 — Ejecución (Execution)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#ef4444', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    subgraph Zone5["⚡ Zona 5 — Ejecución (executeTask)"]
+        ET["executeTask(req, plan, odooTaskType?)\ndelegate.ts:268-406"]
+
+        subgraph Guardrails["Guardrails Check"]
+            CB["isAvailable(providerName)\ncircuit-breaker.ts:16-28"]
+            CB_STATES["States:\nclosed (ok) | half-open (test)\n| open (blocked 5min)"]
+            BUDGET["isOverBudget(providerName)\nbudgets.ts:69-71"]
+            BUDGET_VALS["DEFAULT_LIMITS:\nclaude=$5, codex=$2\nrest=$0"]
+            ENABLED["isEnabled(providerName)\nprovidersCfg[name].enabled"]
+            FALLBACK["Fallback chain:\nsecondary → throw Error\n'All providers unavailable'"]
+        end
+
+        subgraph Path1["Path A: Fire-and-Forget (antigravity only)"]
+            FA["req.fire_and_forget === true\n&& providerName === 'antigravity'"]
+            FA_SAVE["saveTaskPrompt(taskId, prompt)\n→ Engram obsId"]
+            FA_RUN["runInTerminal(\n  taskId, obsId, model,\n  16min timeout\n)"]
+            FA_RESULT["saveResult() → Engram\nrecordSuccess → completeTask"]
+            FA_RETURN["return IMMEDIATELY\n{status:'running'}\nbackground execution"]
+        end
+
+        subgraph Path2["Path B: Antigravity Terminal"]
+            AG_PATH["providerName === 'antigravity'"]
+            AG_SAVE["saveTaskPrompt(taskId, prompt)"]
+            AG_TERM["runInTerminal(\n  taskId, obsId, model,\n  16min timeout\n)"]
+            AG_PARSE["extractAgyOutput(raw)\nJSON parse → .result\n| raw fallback"]
+        end
+
+        subgraph Path3["Path C: Standard Subprocess"]
+            SP_PATH["provider !== antigravity"]
+            SP_EXEC["runSubprocess(\n  provider, prompt,\n  model, effort\n)\nsubprocess.ts:8-17"]
+            SP_PROVIDER["provider.execute(\n  prompt, model, effort\n)\n→ stdout"]
+            SP_TIMEOUT["10-15 min timeout\n(depends on provider)"]
+        end
+
+        subgraph Output["Output Processing"]
+            ENGRAM_SAVE["saveResult({\n  taskId, phase, provider,\n  change, project: 'iris',\n  content: output\n})"]
+            CB_SUCCESS["recordSuccess(providerName)"]
+            TASK_DONE["completeTask(id, output, engramId)"]
+            DIAGRAM["if phase==='design' && change\n→ generateDiagram()\nfire-and-forget"]
+            HFD["triggerHumanFirstDoc()\nfire-and-forget"]
+            SUMMARY["firstLine → summary\n(truncated to 200 chars)"]
+            RETURN_OK["return DelegateResult{\n  status: 'done',\n  engramId, summary,\n  duration_ms, ...\n}"]
+        end
+
+        subgraph ErrorPath["Error Path"]
+            CATCH["catch(err)"]
+            CB_FAIL["recordFailure(providerName)"]
+            TASK_FAIL["failTask(id, err.message)"]
+            RETURN_FAIL["return DelegateResult{\n  status: 'failed',\n  error: msg\n}"]
+        end
+    end
+
+    ET --> CB
+    CB --> CB_STATES
+    ET --> BUDGET
+    BUDGET --> BUDGET_VALS
+    ET --> ENABLED
+    CB & BUDGET & ENABLED -->|"any fails"| FALLBACK
+
+    ET -->|"fire_and_forget && antigravity"| FA
+    FA --> FA_SAVE --> FA_RUN --> FA_RESULT --> FA_RETURN
+
+    ET -->|"antigravity"| AG_PATH
+    AG_PATH --> AG_SAVE --> AG_TERM --> AG_PARSE
+
+    ET -->|"other providers"| SP_PATH
+    SP_PATH --> SP_EXEC --> SP_PROVIDIDER --> SP_TIMEOUT
+
+    AG_PARSE & SP_TIMEOUT --> ENGRAM_SAVE
+    ENGRAM_SAVE --> CB_SUCCESS
+    CB_SUCCESS --> TASK_DONE
+    TASK_DONE --> DIAGRAM
+    DIAGRAM --> HFD
+    HFD --> SUMMARY
+    SUMMARY --> RETURN_OK
+
+    ENGRAM_SAVE & AG_TERM & SP_TIMEOUT -->|"on error"| CATCH
+    CATCH --> CB_FAIL
+    CB_FAIL --> TASK_FAIL
+    TASK_FAIL --> RETURN_FAIL
+
+    style Zone5 fill:#0d1117,stroke:#ef4444,stroke-width:2px
+    style ET fill:#1f6feb,stroke:#ef4444,color:#fff
+```
+
+## Zona 6 — Post-Procesamiento (Post-Processing & Salida)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#22d3ee', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    subgraph Zone6["🏁 Zona 6 — Post-Procesamiento y Salida"]
+        DIR["// Engine:\ndelegate.ts lines 337-406"]
+
+        subgraph Engram["Engram Persistence"]
+            ES["saveResult()\nengram/sync.ts:47-69"]
+            TOPIC_KEY["topicKey:\n'iris/{project}/{change}/\n{taskId}/{phase}/{provider}'"]
+            MEM_SAVE["client.callTool\n→ mem_save{title, topic_key,\n  type:'manual', project,\n  content}"]
+            ENG_RESP["response → extract id\n→ return engramId: number"]
+        end
+
+        subgraph Diagrams["Excalidraw Diagram Generation"]
+            DG["generateDiagram()\ndiagrams/generator.ts:36-94"]
+            DG_TRIGGER["Trigger: phase==='design' && change"]
+            DG_KNOWLEDGE["Load SKILL.md\n+ template + alesco-palette\n+ element-templates"]
+            DG_PROMPT["Build prompt →\nAntigravityProvider.execute()\nGemini 2.5 Flash (Medium)"]
+            DG_PARSE["Extract JSON from response\n(strip markdown fences)"]
+            DG_SAVE["Write .excalidraw file\n→ docs/sdd/{change}/design-arch.excalidraw"]
+        end
+
+        subgraph HumanFirst["Human First Documentation"]
+            HFD["triggerHumanFirstDoc()\ndelegate.ts:150-174"]
+            HFD_TRIGGER["Trigger: after every executeTask"]
+            HFD_TEMPLATE["loadTemplate('docs/sdd-{phase}')"]
+            HFD_ANTI["AntigravityProvider\nGemini 3.5 Flash (Medium)"]
+            HFD_SAVE["Save .md\n→ docs/sdd/{change}/{phase}.md"]
+        end
+
+        subgraph Response["DelegateResult Response"]
+            RESP["DelegateResult{\n  taskId, provider, model, effort,\n  complexity, engramId?, duration_ms?,\n  startedAt, completedAt,\n  status, summary?, error?\n}"]
+            STATUS_DONE["status: 'done'\n+ engramId + summary"]
+            STATUS_FAILED["status: 'failed'\n+ error message"]
+            STATUS_RUNNING["status: 'running'\n(for fire-and-forget)"]
+        end
+    end
+
+    DIR --> ES
+    ES --> TOPIC_KEY
+    TOPIC_KEY --> MEM_SAVE
+    MEM_SAVE --> ENG_RESP
+
+    DIR -.->|"fire-and-forget"| DG
+    DG_TRIGGER -.-> DG
+    DG --> DG_KNOWLEDGE
+    DG_KNOWLEDGE --> DG_PROMPT
+    DG_PROMPT --> DG_PARSE
+    DG_PARSE --> DG_SAVE
+
+    DIR -.->|"fire-and-forget"| HFD
+    HFD_TRIGGER -.-> HFD
+    HFD --> HFD_TEMPLATE
+    HFD_TEMPLATE --> HFD_ANTI
+    HFD_ANTI --> HFD_SAVE
+
+    DIR --> RESP
+    RESP --> STATUS_DONE
+    RESP --> STATUS_FAILED
+    RESP --> STATUS_RUNNING
+
+    style Zone6 fill:#0d1117,stroke:#22d3ee,stroke-width:2px
+    style DIR fill:#1f6feb,stroke:#22d3ee,color:#fff
+```
+
+---
+
+# SECCIÓN 17 — Arquitectura del Código (Code Architecture) 💎
+
+> **Estructura estática completa:** 7 capas de abstracción, 43+ archivos TypeScript, ~407 líneas en el core, 373 tipos. Cada capa solo importa de capas inferiores.
+
+## Capa 7 — Entry Point (Punto de Entrada)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#22d3ee', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer7["🏛️ Capa 7 — Entry Point (src/index.ts)"]
+        BOOT["IIFE async bootstrap\nlines 57-78"]
+        SIGINT["process.on('SIGINT')\n→ closeEngramClient\n→ closeCodeGraphClient\n→ closeDb\n→ exit(0)"]
+        SIGTERM["process.on('SIGTERM')\n→ closeEngramClient\n→ closeCodeGraphClient\n→ closeDb\n→ exit(0)"]
+        CONNECT["server.connect(transport)"]
+        CATCH["catch(err)\n→ console.error\n→ exit(1)"]
+
+        subgraph CLI["CLI interface (lines 12-45)"]
+            IS_TTY["process.stdin.isTTY === true"]
+            VERSION["'version' or '--version'\n→ print v{pkgJson.version}"]
+            HELP["show help text:\n  mcp | version | help"]
+            MCP["'mcp' → start server"]
+        end
+    end
+
+    BOOT --> SIGINT
+    BOOT --> SIGTERM
+    BOOT --> CONNECT
+    BOOT --> CATCH
+    IS_TTY --> VERSION
+    IS_TTY --> HELP
+    IS_TTY --> MCP
+
+    style Layer7 fill:#0d1117,stroke:#22d3ee,stroke-width:2px
+    style BOOT fill:#1f6feb,stroke:#22d3ee,color:#fff
+```
+
+## Capa 6 — Interfaz MCP (MCP Interface)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#a855f7', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer6["📡 Capa 6 — Interfaz MCP (src/server.ts)"]
+        REG["registerTools(server)\nlines 16-139"]
+
+        subgraph Tools["12 MCP Tools"]
+            T1["delegate\nDelegateInputSchema\n→ handleDelegate()"]
+            T2["status\n→ handleStatus()"]
+            T3["history\nHistoryInputSchema\n→ handleHistory()"]
+            T4["task\nTaskInputSchema\n→ handleTask()"]
+            T5["config\nConfigInputSchema\n→ handleConfig()"]
+            T6["setup\n{provider: z.string()}\n→ handleSetup()"]
+            T7["odoo_sh_discover\nDiscoverInputSchema\n→ handleDiscover()"]
+            T8["odoo_sh_logs\nLogsInputSchema\n→ handleLogs()"]
+            T9["odoo_sh_psql\nPsqlInputSchema\n→ handlePsql()"]
+            T10["odoo_sh_status\nStatusInputSchema\n→ handleOdooStatus()"]
+            T11["odoo_sh_backups\nBackupsInputSchema\n→ handleBackups()"]
+        end
+    end
+
+    REG --> T1
+    REG --> T2
+    REG --> T3
+    REG --> T4
+    REG --> T5
+    REG --> T6
+    REG --> T7
+    REG --> T8
+    REG --> T9
+    REG --> T10
+    REG --> T11
+
+    style Layer6 fill:#0d1117,stroke:#a855f7,stroke-width:2px
+    style REG fill:#1f6feb,stroke:#a855f7,color:#fff
+```
+
+## Capa 5 — Router (Enrutamiento)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#f59e0b', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer5["🧭 Capa 5 — Router (src/router/)"]
+        subgraph Classifier["classifier.ts (81 lines)"]
+            CLI["scoreComplexity(req)\n→ ComplexityScore"]
+            CLI_W["WEIGHTS:\nscope=30, contextSize=30,\narchImpact=20, depResolution=20"]
+            CLI_KW["ARCH_KEYWORDS: 11\nDEPENDENCY_KEYWORDS: 10"]
+            CLI_LV["levelFromScore():\n≤35 LOW, ≤70 MED, ≥71 HIGH"]
+        end
+
+        subgraph Selector["selector.ts (122 lines)"]
+            SEL["selectProvider()\n→ ProviderSelection"]
+            SEL_PP["PHASE_PROVIDER[8]\nphase → primary provider"]
+            SEL_PF["PHASE_FALLBACK_PROVIDER[8]\nphase → fallback provider"]
+            SEL_MM["7 Model Maps × 3 Complexity\n(CLAUDE, ANTIGRAVITY, COPILOT,\n CODEX, KILO, CURSOR, OPENCODE)"]
+            SEL_OT["OdooTaskType override\n23 TASK_CONFIG entries"]
+        end
+
+        subgraph CircuitBreaker["circuit-breaker.ts (59 lines)"]
+            CB_CORE["Map<ProviderName, State>\nin-memory (resets on restart)"]
+            CB_VALS["MAX_FAILURES=3\nRESET_TIMEOUT_MS=5min"]
+            CB_FNS["isAvailable() | recordFailure()\nrecordSuccess() | getStatus()\ngetAllStatuses()"]
+        end
+    end
+
+    CLI -->|"ComplexityScore"| SEL
+    SEL -->|"ProviderSelection"| CB_CORE
+
+    style Layer5 fill:#0d1117,stroke:#f59e0b,stroke-width:2px
+```
+
+## Capa 4 — Providers (7 providers)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#ef4444', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer4["🤖 Capa 4 — Providers (src/providers/)"]
+        BASE["base.ts (11 lines)\nBaseProvider implements IProvider\n{name, execute(), isAvailable()}"]
+
+        subgraph Providers["7 Provider Implementations"]
+            CLAUDE["claude.ts (32 lines)\nClaudeProvider\n'claude --version' → isAvailable\n'claude -p --model --effort'\n10 min timeout"]
+            ANTI["antigravity.ts (71 lines)\nAntigravityProvider\nagy.exe exists → isAvailable\nsettings.json swapModel/restoreModel\n16 min timeout"]
+            COPILOT["copilot.ts (31 lines)\nCopilotProvider\n'gh --version' → isAvailable\n'gh copilot -p --model'\n10 min timeout"]
+            CODEX["codex.ts (31 lines)\nCodexProvider\n'codex --version' → isAvailable\n'codex exec -m -c'\n15 min timeout, input pipe"]
+            KILO["kilo.ts (30 lines)\nKiloProvider\n'kilocode --version' → isAvailable\n'kilocode --model'\n10 min timeout"]
+            CURSOR["cursor.ts (30 lines)\nCursorProvider\n'cursor --version' → isAvailable\n'cursor agent --model'\n10 min timeout"]
+            OPENCODE["opencode.ts (42 lines)\nOpenCodeProvider\n'opencode --version' → isAvailable\n'opencode run --model'\n10 min timeout\nresolveModel(big-pickle/flash-free)"]
+        end
+    end
+
+    BASE --> CLAUDE
+    BASE --> ANTI
+    BASE --> COPILOT
+    BASE --> CODEX
+    BASE --> KILO
+    BASE --> CURSOR
+    BASE --> OPENCODE
+
+    style Layer4 fill:#0d1117,stroke:#ef4444,stroke-width:2px
+    style BASE fill:#1f6feb,stroke:#ef4444,color:#fff
+```
+
+## Capa 3 — Contexto (Context Assembly)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#10b981', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer3["📦 Capa 3 — Contexto (src/context/)"]
+        CD["context-detector.ts (210 lines)\ndetectSkills()\n9 skills, 6 triggers\nconfidence 0.5-0.9\n→ SkillRequirement[]"]
+
+        ODOO["odoo.ts (96 lines)\nbuildOdooContext()\nfindManifest 4 levels up\nparseManifestField\ndetectEdition\n→ OdooContext"]
+
+        OS["odoo-selector.ts (182 lines)\ndetectTaskType()\n130+ keywords → 23 types\nTASK_CONFIG[23]{\n  primaryProvider,\n  fallbackProvider,\n  knowledgeFiles[],\n  activeRules[]\n}"]
+
+        RULES["rules.ts (93 lines)\ninjectKnowledgeContext()\nparseRulesFile (R1-R99)\nin-memory cache\n→ '## Knowledge Context' text"]
+
+        SLIM["slim-md.ts (28 lines)\nbuildTaskPreamble()\nfixed template\n'You are iris...'"]
+
+        CACHE["map-cache.ts (40 lines)\nMap<key, {value, expiresAt}>\nTTL: 30 min"]
+    end
+
+    CD --> OS
+    ODOO --> RULES
+    OS --> RULES
+    RULES --> SLIM
+
+    style Layer3 fill:#0d1117,stroke:#10b981,stroke-width:2px
+```
+
+## Capa 2 — Store (Almacenamiento)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#22d3ee', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer2["💾 Capa 2 — Store (src/store/)"]
+        DB["db.ts (152 lines)\ngetDb() → singleton Database\n3 engine priority:\n  1. better-sqlite3 (npm+pkg)\n  2. bun:sqlite (Bun runtime)\n  3. node:sqlite (Node 22.5+)\nWAL + FK + schema init\nMigration: adapter→provider cols"]
+
+        TASKS["tasks.ts (82 lines)\nCRUD operations:\ncreateTask | updateTask\ngetTask | listTasks\ncompleteTask | failTask\n6 statuses:\npending→running→done/failed\npending_confirmation/cancelled"]
+
+        BUDGET["budgets.ts (76 lines)\nDEFAULT_LIMITS:\nclaude=$5, codex=$2\nrest=$0\nensureRow | resetIfExpired\nrecordUsage | getDailyBudget\nisOverBudget | getAllBudgets"]
+    end
+
+    DB --> TASKS
+    DB --> BUDGET
+
+    style Layer2 fill:#0d1117,stroke:#22d3ee,stroke-width:2px
+    style DB fill:#1f6feb,stroke:#22d3ee,color:#fff
+```
+
+## Capa 1 — Infraestructura (Infrastructure)
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#a855f7', 'secondaryColor': '#161b22', 'tertiaryColor': '#21262d'}}}%%
+flowchart LR
+    subgraph Layer1["⚙️ Capa 1 — Infraestructura"]
+
+        subgraph Engram["engram/"]
+            EC["client.ts (54 lines)\ngetEngramClient()\nStdioClientTransport\n4-path binary resolution\n8s connect timeout"]
+            ES["sync.ts (124 lines)\nwaitForEngramCompletion\nsaveResult | getObservation\nsaveTaskPrompt | searchMemory\nPolling 3s, Engram IPC"]
+        end
+
+        subgraph CodeGraph["codegraph/"]
+            CG["client.ts (109 lines)\n11 tool functions:\ncgStatus | cgFiles | cgSearch\ncgContext(maxNodes=20)\ncgExplore | cgNode | cgTrace\ncgCallers | cgCallees\ncgImpact | close"]
+        end
+
+        subgraph Executor["executor/"]
+            SUB["subprocess.ts (17 lines)\nrunSubprocess(provider,\n  prompt, model, effort)"]
+            TERM["terminal.ts (80 lines)\nrunInTerminal()\nswapModel/restoreModel\nBase64 UTF-16LE PowerShell\nPoll via Engram IPC"]
+            ENT["enterprise.ts (60 lines)\nsearchEnterprise()\nripgrep (rg) --json\n30s timeout, 10MB buffer"]
+            GIT["git.ts (66 lines)\nclassifyBranch | getCurrentBranch\ncheckIdentity | checkR5PreMigrate\nrequiresExplicitApproval\nR2 branch safety"]
+        end
+
+        subgraph Diagrams["diagrams/"]
+            DGEN["generator.ts (94 lines)\ngenerateDiagram()\n4 templates: odoo-erd,\nodoo-owl-flow,\nsdd-architecture,\nodoo-deployment\nAntigravityProvider\nGemini 2.5 Flash (Medium)"]
+        end
+
+        subgraph Config["config/"]
+            LOCAL["local.ts (66 lines)\nalesco_path resolution\n3 priorities:\n1. ENV var\n2. iris.local.yaml\n3. PS1 auto-detect"]
+        end
+
+        CONFIG_CORE["config.ts (67 lines)\ngetConfig() | saveConfig()\nupdateConfig()\nMigration: adapters→providers\n~/.iris/config.json"]
+
+        TOOLS_EXTRA["tools/ (remaining)\nstatus.ts: 141 lines\nodoo-sh.ts: 299 lines\nui-map-engine.ts: 734 lines\nquality-scanner.ts: 1589 lines\nquality-cli.ts: 140 lines"]
+
+        UPDATER["updater.ts (49 lines)\ncheckForUpdates()\nGitHub API releases\nCACHE_TTL=1h\ncompareVersions"]
+    end
+
+    EC --> ES
+    ENG --> CG
+    SUB --> TERM
+    ENG --> ENT
+    ENG --> GIT
+    CONFIG_CORE --> LOCAL
+    TOOLS_EXTRA --> ES
+    TOOLS_EXTRA --> CG
+
+    style Layer1 fill:#0d1117,stroke:#a855f7,stroke-width:2px
+```
+
+## Dependencias entre Capas
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#22d3ee', 'secondaryColor': '#1e293b', 'tertiaryColor': '#21262d'}}}%%
+flowchart TD
+    L7["Capa 7 — Entry\nindex.ts"]
+    L6["Capa 6 — MCP Interface\nserver.ts"]
+    L5["Capa 5 — Router\nclassifier + selector + circuit-breaker"]
+    L4["Capa 4 — Providers\n7 providers"]
+    L3["Capa 3 — Context\ndetector + odoo + rules"]
+    L2["Capa 2 — Store\ndb + tasks + budgets"]
+    L1["Capa 1 — Infrastructure\nengram + codegraph + executor + config + updater"]
+    TYPES["⚡ Types\nindex.ts (373 lines)\n22 interfaces, 8 types, 6 enums\nTODAS las capas importan de aquí"]
+
+    L7 --> L6
+    L6 --> L5
+    L6 --> L4
+    L6 --> L3
+    L6 --> L2
+    L5 --> L4
+    L5 --> L3
+    L4 --> L2
+    L3 --> L2
+    L2 --> L1
+    L6 -.-> TYPES
+    L7 -.-> TYPES
+    L5 -.-> TYPES
+    L4 -.-> TYPES
+    L3 -.-> TYPES
+    L2 -.-> TYPES
+    L1 -.-> TYPES
+
+    style TYPES fill:#f59e0b,stroke:#22d3ee,color:#000
+```
+
+## Resumen de Archivos
+
+| Capa | Archivos | Líneas Totales | Propósito |
+|------|----------|---------------|-----------|
+| 7 — Entry | `src/index.ts` | 78 | Bootstrap, CLI, signal handlers |
+| 6 — MCP | `src/server.ts` | 139 | 12 MCP tools registration |
+| 5 — Router | `src/router/` (3 archivos) | 262 | Clasificación, selección, circuit breaker |
+| 4 — Providers | `src/providers/` (8 archivos) | 278 | 7 AI providers + base abstracta |
+| 3 — Context | `src/context/` (6 archivos) | 649 | Detección, Odoo, skills, reglas |
+| 2 — Store | `src/store/` (3 archivos) | 310 | SQLite, tasks, budgets |
+| 1 — Infra | `src/engram/`, `src/codegraph/`, `src/executor/`, `src/diagrams/`, `src/config/` | ... | Conexiones externas, diagramas, git |
+| — Tools | `src/tools/` (6 archivos) | ~2705 | 12 tools, UI map, quality scanner |
+| — Types | `src/types/index.ts` | 373 | Todas las interfaces y tipos |
+
+> **Nota arquitectónica:** Todas las capas importan de `types/index.ts` (dependencia plana de tipos). Ninguna capa superior importa directamente de una capa inferior — siempre a través de funciones exportadas. Esto permite testear cada capa de forma aislada.

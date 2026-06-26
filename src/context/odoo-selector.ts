@@ -1,8 +1,8 @@
-import type { AdapterName, OdooTaskType } from '../types/index.js'
+import type { ProviderName, OdooTaskType } from '../types/index.js'
 
 export interface TaskConfig {
-  primaryAdapter: AdapterName
-  fallbackAdapter: AdapterName
+  primaryProvider: ProviderName
+  fallbackProvider: ProviderName
   knowledgeFiles: string[]
   activeRules: string[]
 }
@@ -129,32 +129,39 @@ export const TASK_KEYWORD_MAP: Record<string, OdooTaskType> = {
   // odoo-changelog
   'changelog': 'odoo-changelog', 'release notes': 'odoo-changelog',
   'history': 'odoo-changelog', 'cambios': 'odoo-changelog',
+
+  // odoo-docs — documentation, diagrams, archival synthesis
+  'documentar': 'odoo-docs', 'documentation': 'odoo-docs',
+  'diagrama': 'odoo-docs', 'diagram': 'odoo-docs',
+  'excalidraw': 'odoo-docs', 'mermaid': 'odoo-docs',
+  'archivar': 'odoo-docs',
 }
 
-// 22 task types → adapter + knowledge + rules
+// 23 task types → provider + knowledge + rules
 export const TASK_CONFIG: Record<OdooTaskType, TaskConfig> = {
-  'odoo-source':     { primaryAdapter: 'antigravity', fallbackAdapter: 'claude',      knowledgeFiles: ['ai/plugins/odoo-source/SKILL.md'],                        activeRules: ['R1','R6','R12'] },
-  'odoo-orm':        { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/core/orm-patterns.md'],                      activeRules: ['R1','R7','R10','R13'] },
-  'odoo-view':       { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/xml-views.md'],                     activeRules: ['R1','R5','R7'] },
-  'odoo-security':   { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/security/security-patterns.md'],             activeRules: ['R1','R4','R13'] },
-  'odoo-wizard':     { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/wizards.md'],                       activeRules: ['R1','R4','R7'] },
-  'odoo-report':     { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['ai/knowledge/patterns/reports.md'],                       activeRules: ['R1','R7'] },
-  'odoo-owl':        { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['ai/knowledge/v18/owl-components.md'],                     activeRules: ['R1','R7','R13'] },
-  'odoo-controller': { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/controllers.md'],                   activeRules: ['R1','R7','R13'] },
-  'odoo-mail':       { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/mail.md'],                          activeRules: ['R1','R7'] },
-  'odoo-portal':     { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['ai/knowledge/patterns/portal.md'],                        activeRules: ['R1','R7','R13'] },
-  'odoo-migration':  { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/core/data-migration.md'],                    activeRules: ['R1','R5'] },
-  'odoo-test':       { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/testing/patterns.md'],                       activeRules: ['R1','R7'] },
-  'odoo-debug':      { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['ai/RULES.md'],                                            activeRules: ['R1'] },
-  'odoo-ops':        { primaryAdapter: 'claude',       fallbackAdapter: 'copilot',     knowledgeFiles: ['contribute/plugins/odoo-ops/SKILL.md'],                   activeRules: ['R2','R3'] },
-  'odoo-ci':         { primaryAdapter: 'claude',       fallbackAdapter: 'copilot',     knowledgeFiles: ['contribute/plugins/odoo-ci/SKILL.md'],                    activeRules: ['R9'] },
-  'odoo-api':        { primaryAdapter: 'claude',       fallbackAdapter: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/controllers.md'],                   activeRules: ['R13'] },
-  'odoo-commit':     { primaryAdapter: 'claude',       fallbackAdapter: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-commit/SKILL.md'],                activeRules: ['R3','R9'] },
-  'odoo-pr':         { primaryAdapter: 'claude',       fallbackAdapter: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-pr/SKILL.md'],                    activeRules: ['R3','R9'] },
-  'odoo-changelog':  { primaryAdapter: 'claude',       fallbackAdapter: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-changelog/SKILL.md'],             activeRules: ['R9'] },
-  'odoo-module':     { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-oca/SKILL.md'],                   activeRules: ['R1','R4','R7'] },
-  'odoo-accounting': { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['ai/knowledge/business/accounting.md'],                   activeRules: ['R1','R7','R10'] },
-  'odoo-stock':      { primaryAdapter: 'antigravity',  fallbackAdapter: 'claude',      knowledgeFiles: ['ai/knowledge/business/stock.md'],                        activeRules: ['R1','R7','R10'] },
+  'odoo-source':     { primaryProvider: 'antigravity', fallbackProvider: 'claude',      knowledgeFiles: ['ai/plugins/odoo-source/SKILL.md'],                        activeRules: ['R1','R6','R12'] },
+  'odoo-orm':        { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/core/orm-patterns.md'],                      activeRules: ['R1','R7','R10','R13'] },
+  'odoo-view':       { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/xml-views.md'],                     activeRules: ['R1','R5','R7'] },
+  'odoo-security':   { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/security/security-patterns.md'],             activeRules: ['R1','R4','R13'] },
+  'odoo-wizard':     { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/wizards.md'],                       activeRules: ['R1','R4','R7'] },
+  'odoo-report':     { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/knowledge/patterns/reports.md'],                       activeRules: ['R1','R7'] },
+  'odoo-owl':        { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/knowledge/v18/owl-components.md'],                     activeRules: ['R1','R7','R13'] },
+  'odoo-controller': { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/controllers.md'],                   activeRules: ['R1','R7','R13'] },
+  'odoo-mail':       { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/mail.md'],                          activeRules: ['R1','R7'] },
+  'odoo-portal':     { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/knowledge/patterns/portal.md'],                        activeRules: ['R1','R7','R13'] },
+  'odoo-migration':  { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/core/data-migration.md'],                    activeRules: ['R1','R5'] },
+  'odoo-test':       { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/testing/patterns.md'],                       activeRules: ['R1','R7'] },
+  'odoo-debug':      { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/RULES.md'],                                            activeRules: ['R1'] },
+  'odoo-ops':        { primaryProvider: 'claude',       fallbackProvider: 'copilot',     knowledgeFiles: ['contribute/plugins/odoo-ops/SKILL.md'],                   activeRules: ['R2','R3'] },
+  'odoo-ci':         { primaryProvider: 'claude',       fallbackProvider: 'copilot',     knowledgeFiles: ['contribute/plugins/odoo-ci/SKILL.md'],                    activeRules: ['R9'] },
+  'odoo-api':        { primaryProvider: 'claude',       fallbackProvider: 'antigravity', knowledgeFiles: ['ai/knowledge/patterns/controllers.md'],                   activeRules: ['R13'] },
+  'odoo-commit':     { primaryProvider: 'claude',       fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-commit/SKILL.md'],                activeRules: ['R3','R9'] },
+  'odoo-pr':         { primaryProvider: 'claude',       fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-pr/SKILL.md'],                    activeRules: ['R3','R9'] },
+  'odoo-changelog':  { primaryProvider: 'claude',       fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-changelog/SKILL.md'],             activeRules: ['R9'] },
+  'odoo-module':     { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['contribute/plugins/odoo-oca/SKILL.md'],                   activeRules: ['R1','R4','R7'] },
+  'odoo-accounting': { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/knowledge/business/accounting.md'],                   activeRules: ['R1','R7','R10'] },
+  'odoo-stock':      { primaryProvider: 'antigravity',  fallbackProvider: 'claude',      knowledgeFiles: ['ai/knowledge/business/stock.md'],                        activeRules: ['R1','R7','R10'] },
+  'odoo-docs':       { primaryProvider: 'opencode',     fallbackProvider: 'antigravity', knowledgeFiles: [],                                                         activeRules: [] },
 }
 
 export function detectTaskType(

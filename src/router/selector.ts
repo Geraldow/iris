@@ -1,8 +1,8 @@
-import type { Phase, ComplexityLevel, AdapterName, AdapterSelection, OdooTaskType } from '../types/index.js'
+import type { Phase, ComplexityLevel, ProviderName, ProviderSelection, OdooTaskType } from '../types/index.js'
 import type { TaskConfig } from '../context/odoo-selector.js'
 import { TASK_CONFIG } from '../context/odoo-selector.js'
 
-const PHASE_ADAPTER: Record<Phase, AdapterName> = {
+const PHASE_PROVIDER: Record<Phase, ProviderName> = {
   explore:  'antigravity',  // Gemini: semantic search + Engram retrieval
   propose:  'claude',       // Claude: reasoning about intent and scope
   spec:     'claude',       // Claude: behavioral specs, RFC 2119
@@ -10,10 +10,10 @@ const PHASE_ADAPTER: Record<Phase, AdapterName> = {
   tasks:    'claude',       // Claude: dependency-ordered task breakdown
   apply:    'claude',       // Claude first; codex fallback for pure code
   verify:   'claude',       // Claude: behavioral validation
-  archive:  'antigravity',  // Gemini: structured archival, Engram sync
+  archive:  'opencode',     // documentation, archival — low-cost synthesis
 }
 
-const PHASE_FALLBACK: Partial<Record<Phase, AdapterName>> = {
+const PHASE_FALLBACK_PROVIDER: Partial<Record<Phase, ProviderName>> = {
   explore:  'claude',
   propose:  'antigravity',
   spec:     'antigravity',
@@ -59,11 +59,13 @@ const CURSOR_MODELS: Record<ComplexityLevel, string> = {
   low: 'claude-3-5-haiku', medium: 'claude-sonnet-4', high: 'claude-opus-4',
 }
 const OPENCODE_MODELS: Record<ComplexityLevel, string> = {
-  low: 'opencode/zen', medium: 'opencode/zen', high: 'opencode/zen',
+  low:    'opencode/deepseek-v4-flash-free',
+  medium: 'opencode/big-pickle',
+  high:   'opencode/big-pickle',
 }
 
-function resolveModelAndEffort(adapter: AdapterName, complexity: ComplexityLevel): { model: string; effort: string } {
-  switch (adapter) {
+function resolveModelAndEffort(provider: ProviderName, complexity: ComplexityLevel): { model: string; effort: string } {
+  switch (provider) {
     case 'claude':
       return { model: CLAUDE_MODELS[complexity], effort: CLAUDE_EFFORTS[complexity] }
     case 'antigravity':
@@ -81,30 +83,30 @@ function resolveModelAndEffort(adapter: AdapterName, complexity: ComplexityLevel
     case 'odoo-sh':
       return { model: 'n/a', effort: 'n/a' }
     default:
-      const _exhaustive: never = adapter
-      throw new Error(`Unknown adapter: ${adapter}`)
+      const _exhaustive: never = provider
+      throw new Error(`Unknown provider: ${provider}`)
   }
 }
 
-export function selectAdapter(
+export function selectProvider(
   phase: Phase,
   complexity: ComplexityLevel,
-  forcedAdapter?: AdapterName,
+  forcedProvider?: ProviderName,
   overrideModel?: string,
   overrideEffort?: string,
   odooTaskType?: OdooTaskType,
-): AdapterSelection {
+): ProviderSelection {
   // Odoo task type overrides phase-based routing
-  let primary: AdapterName
-  let fallback: AdapterName | null
+  let primary: ProviderName
+  let fallback: ProviderName | null
 
   if (odooTaskType && TASK_CONFIG[odooTaskType]) {
     const cfg: TaskConfig = TASK_CONFIG[odooTaskType]
-    primary = forcedAdapter ?? cfg.primaryAdapter
-    fallback = cfg.fallbackAdapter
+    primary = forcedProvider ?? cfg.primaryProvider
+    fallback = cfg.fallbackProvider
   } else {
-    primary = forcedAdapter ?? PHASE_ADAPTER[phase]
-    fallback = PHASE_FALLBACK[phase] ?? null
+    primary = forcedProvider ?? PHASE_PROVIDER[phase]
+    fallback = PHASE_FALLBACK_PROVIDER[phase] ?? null
   }
 
   const { model, effort } = resolveModelAndEffort(primary, complexity)

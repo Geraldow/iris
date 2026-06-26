@@ -4,19 +4,19 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { z } from 'zod'
 import { scoreComplexity } from '../router/classifier.js'
-import { selectAdapter, ANTIGRAVITY_MODELS } from '../router/selector.js'
+import { selectProvider, ANTIGRAVITY_MODELS } from '../router/selector.js'
 import { isAvailable, recordFailure, recordSuccess } from '../router/circuit-breaker.js'
 import { isOverBudget, recordUsage } from '../store/budgets.js'
 import { createTask, completeTask, failTask, updateTask } from '../store/tasks.js'
 import { getConfig } from '../config.js'
 import { getObservation, saveResult } from '../engram/sync.js'
-import { ClaudeAdapter } from '../adapters/claude.js'
-import { AntigravityAdapter } from '../adapters/antigravity.js'
-import { CopilotAdapter } from '../adapters/copilot.js'
-import { CodexAdapter } from '../adapters/codex.js'
-import { KiloAdapter } from '../adapters/kilo.js'
-import { CursorAdapter } from '../adapters/cursor.js'
-import { OpenCodeAdapter } from '../adapters/opencode.js'
+import { ClaudeProvider } from '../providers/claude.js'
+import { AntigravityProvider } from '../providers/antigravity.js'
+import { CopilotProvider } from '../providers/copilot.js'
+import { CodexProvider } from '../providers/codex.js'
+import { KiloProvider } from '../providers/kilo.js'
+import { CursorProvider } from '../providers/cursor.js'
+import { OpenCodeProvider } from '../providers/opencode.js'
 import { homedir } from 'os'
 import { buildTaskPreamble } from '../context/slim-md.js'
 import { runSubprocess } from '../executor/subprocess.js'
@@ -27,7 +27,7 @@ import { detectTaskType } from '../context/odoo-selector.js'
 import { detectSkills, extractFilePath } from '../context/context-detector.js'
 import { injectKnowledgeContext } from '../context/rules.js'
 import { generateDiagram } from '../diagrams/generator.js'
-import type { IAdapter, AdapterName, OdooTaskType, DelegateRequest, DelegateResult, PendingPlan } from '../types/index.js'
+import type { IProvider, ProviderName, OdooTaskType, DelegateRequest, DelegateResult, PendingPlan } from '../types/index.js'
 
 function extractAgyOutput(raw: string): string {
   try {
@@ -64,17 +64,18 @@ export const DelegateInputSchema = z.object({
   fire_and_forget: z.boolean().optional(),
   confirm: z.string().optional(),
   override: z.object({ model: z.string().optional(), effort: z.string().optional() }).optional(),
+  provider: z.enum(['claude', 'antigravity', 'copilot', 'codex', 'kilo', 'cursor', 'opencode']).optional().describe('Force a specific AI provider. If omitted, iris auto-selects based on phase and task type.'),
 })
 
-const ADAPTERS = {
-  claude: new ClaudeAdapter(),
-  antigravity: new AntigravityAdapter(),
-  copilot: new CopilotAdapter(),
-  codex: new CodexAdapter(),
-  kilo: new KiloAdapter(),
-  cursor: new CursorAdapter(),
-  opencode: new OpenCodeAdapter(),
-} as unknown as Record<AdapterName, IAdapter>
+const PROVIDERS = {
+  claude: new ClaudeProvider(),
+  antigravity: new AntigravityProvider(),
+  copilot: new CopilotProvider(),
+  codex: new CodexProvider(),
+  kilo: new KiloProvider(),
+  cursor: new CursorProvider(),
+  opencode: new OpenCodeProvider(),
+} as unknown as Record<ProviderName, IProvider>
 
 function loadTemplate(phase: string): string {
   const templatePath = join(PROMPTS_DIR, `${phase}.md`)
@@ -121,10 +122,10 @@ async function buildPrompt(req: DelegateRequest, odooTaskType?: OdooTaskType): P
     const odooCtx = await buildOdooContext(req.instruction)
     if (odooCtx) {
       prompt += `\n\n${formatOdooContextForPrompt(odooCtx)}`
-      if (odooTaskType) {
-        const knowledge = injectKnowledgeContext(odooTaskType)
-        if (knowledge) prompt += `\n\n${knowledge}`
-      }
+    }
+    if (odooTaskType) {
+      const knowledge = injectKnowledgeContext(odooTaskType)
+      if (knowledge) prompt += `\n\n${knowledge}`
     }
   } catch { /* non-Odoo project — skip silently */ }
 
@@ -161,9 +162,9 @@ async function triggerHumanFirstDoc(
     .replace(/\{task_type\}/g, taskType ?? 'general')
     .replace(/\{change\}/g, change ?? 'unknown')
 
-  const adapter = ADAPTERS['antigravity']
+  const provider = PROVIDERS['antigravity']
   const model = 'Gemini 3.5 Flash (Medium)'
-  const docContent = await adapter.execute(prompt, model, 'n/a')
+  const docContent = await provider.execute(prompt, model, 'n/a')
 
   // R-HF-5: save .md to docs/sdd/{change}/{phase}.md
   const changeName = change ?? 'unknown'
@@ -201,12 +202,12 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
   })
   req.detectedSkills = ctxDetected.all
 
-  // --- Score complexity & select adapter ---
+  // --- Score complexity & select provider ---
   const score = scoreComplexity(req)
-  const selection = selectAdapter(
+  const selection = selectProvider(
     req.phase,
     score.level,
-    undefined,
+    req.provider,
     req.override?.model,
     req.override?.effort,
     odooTaskType,
@@ -221,7 +222,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
   ) {
     const confirmToken = randomUUID()
     const plan: PendingPlan = {
-      adapter: selection.primary,
+      provider: selection.primary,
       model: selection.model,
       effort: selection.effort,
       complexity: score.level,
@@ -231,7 +232,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
 
     return {
       taskId: randomUUID(),
-      adapter: selection.primary,
+      provider: selection.primary,
       model: selection.model,
       effort: selection.effort,
       complexity: score.level,
@@ -242,7 +243,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
   }
 
   const plan: PendingPlan = {
-    adapter: selection.primary,
+    provider: selection.primary,
     model: selection.model,
     effort: selection.effort,
     complexity: score.level,
@@ -252,7 +253,7 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
   if (req.dry_run) {
     return {
       taskId: 'dry-run',
-      adapter: plan.adapter,
+      provider: plan.provider,
       model: plan.model,
       effort: plan.effort,
       complexity: plan.complexity,
@@ -266,20 +267,21 @@ export async function handleDelegate(input: unknown): Promise<DelegateResult> {
 
 async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType?: OdooTaskType): Promise<DelegateResult> {
   // --- Circuit breaker + budget + enabled check with fallback ---
-  let adapterName = plan.adapter
+  let providerName = plan.provider
   const cfg = getConfig()
-  const isEnabled = (name: AdapterName) => cfg.adapters[name]?.enabled !== false
-  if (!isEnabled(adapterName) || !isAvailable(adapterName) || isOverBudget(adapterName)) {
-    const { fallback } = selectAdapter(req.phase, plan.complexity, undefined, undefined, undefined, odooTaskType)
+  const providersCfg = cfg.providers ?? (cfg as unknown as Record<string, unknown>)['adapters'] as typeof cfg.providers ?? {}
+  const isEnabled = (name: ProviderName) => providersCfg[name]?.enabled !== false
+  if (!isEnabled(providerName) || !isAvailable(providerName) || isOverBudget(providerName)) {
+    const { fallback } = selectProvider(req.phase, plan.complexity, req.provider, undefined, undefined, odooTaskType)
     if (!fallback || !isEnabled(fallback) || !isAvailable(fallback) || isOverBudget(fallback)) {
-      throw new Error(`All adapters unavailable or over budget for phase=${req.phase}`)
+      throw new Error(`All providers unavailable or over budget for phase=${req.phase}`)
     }
-    adapterName = fallback
+    providerName = fallback
   }
 
-  const adapter = ADAPTERS[adapterName]
+  const provider = PROVIDERS[providerName]
   const task = createTask({
-    adapter: adapterName,
+    provider: providerName,
     phase: req.phase,
     complexity: plan.complexity,
     prompt: plan.prompt,
@@ -289,26 +291,26 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
   const start = Date.now()
 
   // fire_and_forget: launch terminal without awaiting — return immediately with status "running"
-  if (req.fire_and_forget && adapterName === 'antigravity') {
+  if (req.fire_and_forget && providerName === 'antigravity') {
     saveTaskPrompt(task.id, plan.prompt).then(obsId => {
       if (!obsId) { failTask(task.id, 'Failed to save task prompt to Engram'); return }
       runInTerminal(task.id, obsId, plan.model, 16 * 60 * 1000)
         .then(result => saveResult({
-          taskId: task.id, phase: req.phase, adapter: adapterName,
+          taskId: task.id, phase: req.phase, provider: providerName,
           change: req.change, project: 'iris', content: extractAgyOutput(result.output),
         }).then(engramId => {
-          recordSuccess(adapterName)
+          recordSuccess(providerName)
           completeTask(task.id, extractAgyOutput(result.output), engramId)
         }))
         .catch(err => {
-          recordFailure(adapterName)
+          recordFailure(providerName)
           failTask(task.id, err instanceof Error ? err.message : String(err))
         })
     }).catch(err => failTask(task.id, err instanceof Error ? err.message : String(err)))
 
     return {
       taskId: task.id,
-      adapter: adapterName,
+      provider: providerName,
       model: plan.model,
       effort: plan.effort,
       complexity: plan.complexity,
@@ -317,16 +319,18 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
     }
   }
 
+  const startTime = new Date()
+
   try {
     let output: string
 
-    if (adapterName === 'antigravity') {
+    if (providerName === 'antigravity') {
       const obsId = await saveTaskPrompt(task.id, plan.prompt)
       if (!obsId) throw new Error('Failed to save task prompt to Engram')
       const result = await runInTerminal(task.id, obsId, plan.model, 16 * 60 * 1000)
       output = extractAgyOutput(result.output)
     } else {
-      const result = await runSubprocess(adapter, plan.prompt, plan.model, plan.effort)
+      const result = await runSubprocess(provider, plan.prompt, plan.model, plan.effort)
       output = result.output
     }
 
@@ -336,18 +340,18 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
     const engramId = await saveResult({
       taskId: task.id,
       phase: req.phase,
-      adapter: adapterName,
+      provider: providerName,
       change: req.change,
       project: 'iris',
       content: output,
     })
 
-    recordSuccess(adapterName)
+    recordSuccess(providerName)
     completeTask(task.id, output, engramId)
 
-    // outputPath is passed to the adapter via the prompt template — the adapter writes
+    // outputPath is passed to the provider via the prompt template — the provider writes
     // the file directly with its own tools (Write/Edit). iris does NOT overwrite here
-    // because the adapter's stdout is a conversational summary, not the file content.
+    // because the provider's stdout is a conversational summary, not the file content.
 
     // Auto-generate excalidraw diagram on design phase (fire-and-forget)
     if (req.phase === 'design' && req.change) {
@@ -374,22 +378,24 @@ async function executeTask(req: DelegateRequest, plan: PendingPlan, odooTaskType
 
     return {
       taskId: task.id,
-      adapter: adapterName,
+      provider: providerName,
       model: plan.model,
       effort: plan.effort,
       complexity: plan.complexity,
       engramId,
       duration_ms: durationMs,
+      startedAt: startTime.toISOString(),
+      completedAt: new Date().toISOString(),
       status: 'done',
       summary,
     }
   } catch (err) {
-    recordFailure(adapterName)
+    recordFailure(providerName)
     const msg = err instanceof Error ? err.message : String(err)
     failTask(task.id, msg)
     return {
       taskId: task.id,
-      adapter: adapterName,
+      provider: providerName,
       model: plan.model,
       effort: plan.effort,
       complexity: plan.complexity,

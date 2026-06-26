@@ -5,11 +5,11 @@ import { homedir, platform } from 'os'
 import { z } from 'zod'
 import { getConfig } from '../config.js'
 import { isAvailable, recordFailure, recordSuccess } from '../router/circuit-breaker.js'
-import type { AdapterName } from '../types/index.js'
+import type { ProviderName } from '../types/index.js'
 
 const execAsync = promisify(exec)
 
-const CB_ADAPTER = 'odoo-sh' as AdapterName
+const CB_PROVIDER = 'odoo-sh' as ProviderName
 
 export interface OdooShConfig {
   projectId: string
@@ -103,8 +103,8 @@ export async function getSshUrl(config: OdooShConfig, branch?: string): Promise<
 }
 
 export async function sshExec(config: OdooShConfig, command: string, branch?: string): Promise<ToolResult> {
-  if (!isAvailable(CB_ADAPTER)) {
-    recordFailure(CB_ADAPTER)
+  if (!isAvailable(CB_PROVIDER)) {
+    recordFailure(CB_PROVIDER)
     return { success: false, output: '', error: 'Circuit breaker open — SSH unavailable. Wait 5 minutes or check Odoo.sh connectivity.' }
   }
 
@@ -116,11 +116,11 @@ export async function sshExec(config: OdooShConfig, command: string, branch?: st
     const sshCmd = `ssh -i "${keyPath}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=${hostDevNull} -o ConnectTimeout=15 -o BatchMode=yes ${sshUrl} "${escapedCmd}"`
 
     const { stdout, stderr } = await execAsync(sshCmd, { timeout: 30_000 })
-    recordSuccess(CB_ADAPTER)
+    recordSuccess(CB_PROVIDER)
     const combined = stdout + (stderr ? `\n${stderr}` : '')
     return { success: true, output: combined }
   } catch (err) {
-    recordFailure(CB_ADAPTER)
+    recordFailure(CB_PROVIDER)
     const msg = err instanceof Error ? err.message : String(err)
     return { success: false, output: '', error: msg }
   }
