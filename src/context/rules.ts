@@ -6,10 +6,11 @@ import { TASK_CONFIG } from './odoo-selector.js'
 
 function getKnowledgeRoot(): string {
   try {
-    return join(fileURLToPath(import.meta.url), '..', '..', '..', 'knowledge', 'odoo')
-  } catch {
-    return join(dirname(process.execPath), 'knowledge', 'odoo')
-  }
+    const fromModule = join(fileURLToPath(import.meta.url), '..', '..', '..', 'knowledge', 'odoo')
+    if (existsSync(join(fromModule, 'ai', 'RULES.md'))) return fromModule
+  } catch {}
+  // SEA binary fallback: executable is at project root, knowledge/ is alongside it
+  return join(dirname(process.execPath), 'knowledge', 'odoo')
 }
 export const KNOWLEDGE_ROOT = getKnowledgeRoot()
 const RULES_PATH = join(KNOWLEDGE_ROOT, 'ai/RULES.md')
