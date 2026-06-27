@@ -1,7 +1,7 @@
 # SYSTEM GUIDE
 
-> **Version:** 1.1.7
-> **Ultima actualizacion:** 2026-06-12
+> **Version:** 1.1.8
+> **Ultima actualizacion:** 2026-06-26
 > **Autor:** Fairw — Systems Engineer & Senior Odoo Architect
 > **Estado:** Borrador
 > **Depende de:** `docs/01-PRD.md`, `docs/02-ADR.md`, `docs/03-ARCHITECTURE.md`, `docs/04-CONTRIBUTING.md`, `AGENTS.md`
@@ -263,6 +263,9 @@ La capa MCP Server es el punto de entrada de iris. Implementa el protocolo MCP (
 | **Entry Point** | `src/server.ts`, `src/index.ts` |
 | **Tools Registradas** | 11 |
 
+**Launcher en dev mode:** `C:\Development\iris\iris.cmd` (ejecuta `node dist\index.js`)
+**Launcher en producción:** `C:\Development\iris\iris.exe` (Bun SEA binary compilado)
+
 Las herramientas registradas en el servidor MCP son:
 
 | Tool | Descripcion | Fuente |
@@ -437,6 +440,14 @@ Carga archivos de conocimiento desde `knowledge/odoo/` segun el tipo de tarea de
 
 El repositorio de conocimiento contiene aproximadamente 120 archivos organizados por version de Odoo (v14-v19), patrones, dominio de negocio, seguridad, agentes, y devops.
 
+**GAP fixes implementados en v1.1.8:**
+
+| GAP | Problema | Fix |
+|-----|---------|-----|
+| GAP-1 | `injectKnowledgeContext` estaba dentro del gate `if (odooCtx)` — que siempre era null desde `C:\Development\iris`. El conocimiento Odoo NUNCA se inyectaba. | Movido fuera del gate en `src/tools/delegate.ts`. Ahora se ejecuta siempre que existe `odooTaskType`. |
+| GAP-2 | `buildTaskPreamble()` no inyectaba la persona del agente especializado de `AGENTS.md`. El sub-agente recibía solo 3 líneas genéricas de contexto. | Se agregó `loadAgentPersona(type)` en `src/context/slim-md.ts` que carga la sección correspondiente de `AGENTS.md` y la antepone al prompt. |
+| SEA | `getKnowledgeRoot()` en `src/context/rules.ts` resolvía `import.meta.url` al path del `.exe` en Bun SEA binary, dando `C:\knowledge\odoo` (inexistente). | Se agregó `existsSync` check: si el path del módulo no existe, fallback a `dirname(process.execPath)/knowledge/odoo`. |
+
 **13 Reglas Maestras (R0-R13):**
 
 | Regla | Titulo | Descripcion |
@@ -455,6 +466,20 @@ El repositorio de conocimiento contiene aproximadamente 120 archivos organizados
 | R11 | Fail Fast | Si un componente falla, registrar el error y fallar con mensaje claro. |
 | R12 | Graceful Degradation | El sistema debe degradarse gracefulmente, no colapsar. |
 | R13 | Data Integrity | Validar integridad referencial antes de operaciones destructive. |
+
+**7 Agentes Especializados (AGENTS.md):**
+
+El archivo `knowledge/odoo/ai/AGENTS.md` define 7 personas especializadas mapeadas a los 23 tipos de tarea Odoo:
+
+| Agente | Especialidad | Tipos de Tarea |
+|--------|-------------|----------------|
+| `orm-architect` | Modelos ORM, campos, relaciones, PostgreSQL | odoo-orm, odoo-wizard, odoo-migration, odoo-accounting, odoo-stock |
+| `view-architect` | Vistas XML, form/tree/kanban, OWL frontend | odoo-view, odoo-owl, odoo-portal, odoo-mail, odoo-report |
+| `security-auditor` | ACL, ir.rule, res.groups, record rules | odoo-security |
+| `integration-engineer` | HTTP controllers, RPC, APIs externas | odoo-controller, odoo-api |
+| `devops-engineer` | Docker, CI/CD, Odoo.sh, infraestructura | odoo-ci, odoo-ops |
+| `business-analyst` | Requerimientos funcionales → specs técnicas | odoo-module, odoo-debug, odoo-source |
+| `quality-engineer` | Tests TransactionCase/HttpCase, E2E, cobertura | odoo-test, odoo-commit, odoo-pr, odoo-changelog |
 
 ### 1.4 Delegate Engine Layer
 
@@ -632,7 +657,7 @@ El puntaje total (0-100) determina el nivel: low (0-35), medium (36-70), high (7
 
 El selector mapea fase SDD a adaptador primario:
 
-| Fase | Adaptador Primario | Modelo Low | Modelo Medium | Modelo High | Fallback |
+| Fase | Provider Primario | Modelo Low | Modelo Medium | Modelo High | Fallback |
 |------|-------------------|------------|---------------|-------------|----------|
 | explore | antigravity | Gemini 3.5 Flash (Medium) | Gemini 3.5 Flash (High) | Gemini 3.1 Pro (High) | claude |
 | propose | claude | claude-haiku-4-5 | claude-sonnet-4-6 | claude-opus-4-7 | antigravity |
@@ -662,25 +687,25 @@ Cada exito resetea el contador de fallos a 0 (maneja recuperacion half-open). El
 La capa de adaptadores AI abstrae la interfaz con diferentes motores de IA. Cada adaptador implementa la interfaz `IAdapter` definida en `src/adapters/base.ts`:
 
 ```typescript
-// Interfaz base (src/adapters/base.ts)
-export abstract class BaseAdapter implements IAdapter {
-  abstract name: AdapterName
+// Interfaz base (src/providers/base.ts)
+export abstract class BaseProvider implements IProvider {
+  abstract name: ProviderName
   abstract execute(prompt: string, model: string, effort: string): Promise<string>
   isAvailable(): boolean { return true }
 }
 ```
 
-**7 Adaptadores Concretos:**
+**7 Providers Concretos:**
 
 | Adaptador | Clase | Comando CLI | Fuente |
 |-----------|-------|-------------|--------|
-| Antigravity / Gemini | `AntigravityAdapter` | `agy.exe` STDIO | `src/adapters/antigravity.ts` |
-| Claude | `ClaudeAdapter` | `claude` CLI STDIO | `src/adapters/claude.ts` |
-| Copilot | `CopilotAdapter` | `gh copilot` CLI | `src/adapters/copilot.ts` |
-| Codex | `CodexAdapter` | `codex` CLI | `src/adapters/codex.ts` |
-| Kilo | `KiloAdapter` | `kilo` CLI | `src/adapters/kilo.ts` |
-| Cursor | `CursorAdapter` | `cursor` CLI | `src/adapters/cursor.ts` |
-| OpenCode | `OpenCodeAdapter` | `opencode` CLI | `src/adapters/opencode.ts` |
+| Antigravity / Gemini | `AntigravityProvider` | `agy.exe` STDIO | `src/providers/antigravity.ts` |
+| Claude | `ClaudeProvider` | `claude` CLI STDIO | `src/providers/claude.ts` |
+| Copilot | `CopilotProvider` | `gh copilot` CLI | `src/providers/copilot.ts` |
+| Codex | `CodexProvider` | `codex` CLI | `src/providers/codex.ts` |
+| Kilo | `KiloProvider` | `kilo` CLI | `src/providers/kilo.ts` |
+| Cursor | `CursorProvider` | `cursor` CLI | `src/providers/cursor.ts` |
+| OpenCode | `OpenCodeProvider` | `opencode` CLI | `src/providers/opencode.ts` |
 
 **Modelos por nivel de complejidad:**
 
